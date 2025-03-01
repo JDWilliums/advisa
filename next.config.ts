@@ -1,12 +1,8 @@
-module.exports = {
-  experimental: {
-    optimizeCss: false,
-  },
-  redirects: async () => [
-    {
-      source: "/:path*",
-      destination: "https://www.advisa.io/:path*",
-      permanent: true,
-    },
-  ],
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  
 };
+
+export default nextConfig;
