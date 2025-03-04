@@ -21,24 +21,18 @@ import {
   Download,
   Save,
   Sparkles,
-  BarChart2,
-  RefreshCw,
   Edit,
   Globe,
   ArrowUp,
-  ArrowDown,
   ChevronUp,
   ChevronDown,
   ExternalLink,
   Check,
   X,
-  Copy,
   Calendar,
   Filter,
-  MessageSquare,
   Lightbulb,
   AlertTriangle,
-  List,
   PlusCircle,
   Star,
   Clock,
@@ -55,10 +49,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
@@ -1476,7 +1468,7 @@ First-click attribution gives 100% credit to the first touchpoint a customer int
                 Content Gap Analysis
               </CardTitle>
               <CardDescription>
-                Topics and keywords that competitors rank for but you don't
+                Topics and keywords that competitors rank for but you don&apos;t
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1487,7 +1479,7 @@ First-click attribution gives 100% credit to the first touchpoint a customer int
                     Content Opportunity
                   </h4>
                   <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
-                    Competitors have 45 pieces of content ranking on page 1 for keywords where you're not ranking at all. These represent your biggest content gap opportunities.
+                    Competitors have 45 pieces of content ranking on page 1 for keywords where you&apos;re not ranking at all. These represent your biggest content gap opportunities.
                   </p>
                 </div>
                 

@@ -5,18 +5,12 @@ import {
   User, 
   Bell, 
   Shield, 
-  Globe, 
-  CreditCard, 
   LogOut, 
   Moon, 
   Sun, 
   Settings, 
   Activity,
   Share2,
-  Key,
-  Grid,
-  Lock,
-  Mail,
   ChevronRight,
   Save
 } from 'lucide-react';

@@ -28,7 +28,6 @@ import {
   Filter,
   Calendar,
   Download,
-  ChevronDown,
   Smile,
   Frown,
   Meh,
@@ -544,7 +543,7 @@ export default function BrandMonitorPage() {
                               3 hours ago
                             </span>
                           </div>
-                          <p className="text-sm">Your competitor "MarketMaster" is being mentioned alongside your brand in 23 recent posts comparing features.</p>
+                          <p className="text-sm">Your competitor &ldquo;MarketMaster&rdquo; is being mentioned alongside your brand in 23 recent posts comparing features.</p>
                         </div>
                       </div>
                     </div>

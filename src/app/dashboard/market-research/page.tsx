@@ -16,13 +16,10 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import {
-  BarChart2,
   TrendingUp,
   Download,
   ExternalLink,
   Eye,
-  Calendar,
-  Filter,
   List,
   Grid3X3,
   PieChart,
@@ -30,15 +27,12 @@ import {
   X,
   RefreshCw,
   AlertCircle,
-  ChevronUp,
-  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 
 // Mock data for competitors
 const competitors = [
@@ -686,7 +680,7 @@ export default function MarketResearchPage() {
             <CardContent>
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-100 dark:border-green-800">
                 <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-2">
-                  Based on our analysis, focusing on "AI-driven marketing strategy generation" offers the highest potential return with the lowest competition.
+                  Based on our analysis, focusing on &ldquo;AI-driven marketing strategy generation&rdquo; offers the highest potential return with the lowest competition.
                 </p>
                 <p className="text-sm text-green-700 dark:text-green-400">
                   This aligns with your current strengths in AI technology and addresses a significant gap in the market.
