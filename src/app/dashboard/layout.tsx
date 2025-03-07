@@ -1,10 +1,10 @@
 "use client";
 
 import { Metadata } from 'next'
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   BarChart2, 
@@ -22,6 +22,7 @@ import {
   X
 } from "lucide-react";
 import { useDarkMode } from "@/hooks/useDarkMode";
+import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from '@/components/Sidebar';
 import Navbar from '@/components/Navbar';
 
@@ -32,53 +33,35 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading, logout, debugAuthState } = useAuth();
 
+  // Log auth state for debugging
   useEffect(() => {
-    // Simulate checking authentication
-    // In a real app, this would check a token in localStorage or a cookie
-    const checkAuth = () => {
-      // For demo purposes, we'll assume the user is authenticated if they reached this page
-      // In a real app, you would check for a valid token
-      setIsAuthenticated(true);
-      setIsLoading(false);
-    };
+    console.log("Dashboard layout mounted, auth state:", {
+      isAuthenticated: !!user,
+      loading
+    });
     
-    checkAuth();
-  }, []);
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  const handleLogout = () => {
-    // Simulate logout
-    console.log('Logging out');
-    // Clear any auth tokens or state
-    setIsAuthenticated(false);
-    // Redirect to login
-    router.push('/');
-  };
+    // Debug auth state on mount
+    debugAuthState();
+  }, [user, loading, debugAuthState]);
 
   // Show loading state
-  if (isLoading) {
+  if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
   // Don't render the dashboard if not authenticated
-  if (!isAuthenticated) {
+  // (The redirect will be handled by AuthContext)
+  if (!user) {
     return null;
   }
 
   return (
     <div className={`flex h-screen ${darkMode ? 'dark' : ''}`}>
-      <Sidebar />
+      <Sidebar onLogout={logout} />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} onLogout={handleLogout} />
+        <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} onLogout={logout} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-6">
           {children}
         </main>

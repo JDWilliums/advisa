@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Search, 
@@ -10,10 +10,15 @@ import {
   Target, 
   Settings,
   Menu,
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 
-export default function Sidebar() {
+interface SidebarProps {
+  onLogout: () => void;
+}
+
+export default function Sidebar({ onLogout }: SidebarProps) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -93,6 +98,17 @@ export default function Sidebar() {
             );
           })}
         </nav>
+        
+        {/* Logout button at bottom */}
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <button 
+            onClick={onLogout}
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+          >
+            <LogOut size={20} className="text-red-500 dark:text-red-400" />
+            <span className={`ml-3 ${isSidebarOpen ? "md:block" : "md:hidden"}`}>Logout</span>
+          </button>
+        </div>
       </aside>
 
       {/* Backdrop for mobile sidebar */}
