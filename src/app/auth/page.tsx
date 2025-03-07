@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function SignInRedirect() {
+export default function AuthRedirect() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
@@ -25,4 +25,4 @@ export default function SignInRedirect() {
       <p className="text-gray-500 dark:text-gray-400">Redirecting...</p>
     </div>
   );
-}
+} 
