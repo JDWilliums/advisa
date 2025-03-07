@@ -1,10 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SignInRedirect() {
+export default function AuthRedirect() {
   const router = useRouter();
 
   useEffect(() => {
@@ -17,4 +16,4 @@ export default function SignInRedirect() {
       <p className="text-gray-500 dark:text-gray-400">Redirecting to login...</p>
     </div>
   );
-}
+} 
