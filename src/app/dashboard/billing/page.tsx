@@ -4,11 +4,15 @@ import React, { useState } from 'react';
 import { 
   CreditCard, 
   Check, 
+  AlertCircle, 
   Download, 
   Plus, 
   ChevronDown, 
   ChevronUp,
+  Calendar,
   Trash,
+  CreditCardIcon,
+  Info,
   ExternalLink
 } from 'lucide-react';
 
@@ -617,7 +621,7 @@ const BillingPage: React.FC = () => {
               <ChevronDown className="h-5 w-5 text-muted-foreground" />
             </button>
             <div className="p-4 border-t border-border text-muted-foreground">
-              <p>If you reach your plan limits, you&apos;ll receive a notification. You can continue using the service, but some features might be limited. We recommend upgrading to a higher plan if you consistently reach your limits.</p>
+              <p>If you reach your plan limits, you'll receive a notification. You can continue using the service, but some features might be limited. We recommend upgrading to a higher plan if you consistently reach your limits.</p>
             </div>
           </div>
           
@@ -627,7 +631,7 @@ const BillingPage: React.FC = () => {
               <ChevronDown className="h-5 w-5 text-muted-foreground" />
             </button>
             <div className="p-4 border-t border-border text-muted-foreground">
-              <p>Yes, you can cancel your subscription at any time. If you cancel, you&apos;ll continue to have access to the service until the end of your current billing period. No refunds are provided for partial months.</p>
+              <p>Yes, you can cancel your subscription at any time. If you cancel, you'll continue to have access to the service until the end of your current billing period. No refunds are provided for partial months.</p>
             </div>
           </div>
         </div>

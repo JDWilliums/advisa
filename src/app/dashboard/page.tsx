@@ -11,6 +11,7 @@ import {
 import {
   BarChart2,
   TrendingUp,
+  Users,
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
@@ -104,7 +105,7 @@ export default function DashboardOverview() {
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{greeting}, User</h1>
         <p className="text-muted-foreground">
-          Here&apos;s an overview of your marketing performance and recent activities.
+          Here's an overview of your marketing performance and recent activities.
         </p>
       </div>
 

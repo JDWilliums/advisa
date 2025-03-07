@@ -3,13 +3,22 @@
 import React, { useState } from 'react';
 import { 
   Calendar, 
+  Clock, 
   Edit2, 
+  FileText, 
   Github, 
   Globe, 
   Linkedin, 
   Mail,
   MapPin,
+  MessageSquare,
+  Share2,
+  Star,
+  User,
+  Activity,
   Briefcase,
+  PieChart,
+  Eye,
   Download,
   Phone
 } from 'lucide-react';

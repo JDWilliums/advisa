@@ -442,7 +442,7 @@ const HomePage = () => {
               <blockquote className="relative z-10">
                 <div className="text-xl font-medium leading-8 text-foreground">
                   <p>
-                    &ldquo;Advisa has transformed how we approach our marketing strategy. The insights we&apos;ve gained through the platform have helped us increase our ROI by 47% in just three months.&rdquo;
+                    "Advisa has transformed how we approach our marketing strategy. The insights we've gained through the platform have helped us increase our ROI by 47% in just three months."
                   </p>
                 </div>
                 <footer className="mt-6">

@@ -1,10 +1,9 @@
 "use client"
 
 import React, { useState } from 'react';
-import { Search, Filter, Download, Calendar, Eye, MoreHorizontal } from 'lucide-react';
+import { Search, Filter, Download, Trash2, Calendar, Eye, MoreHorizontal } from 'lucide-react';
 
 // Define types for our report data
-/*}
 interface Report {
   id: number;
   title: string;
@@ -17,7 +16,6 @@ interface Report {
   fileSize: string;
   starred: boolean;
 }
-  */
 
 // Sample data for demonstration
 const mockReports = [
@@ -375,7 +373,7 @@ const SavedReportsPage = () => {
                 <Download className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Downloaded &ldquo;Q1 2025 Social Media Analysis&rdquo;</p>
+                <p className="text-sm font-medium text-foreground">Downloaded "Q1 2025 Social Media Analysis"</p>
                 <p className="text-xs text-muted-foreground">10 minutes ago</p>
               </div>
             </div>
@@ -390,7 +388,7 @@ const SavedReportsPage = () => {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-foreground">Created &ldquo;New Product Launch Strategy&rdquo;</p>
+                <p className="text-sm font-medium text-foreground">Created "New Product Launch Strategy"</p>
                 <p className="text-xs text-muted-foreground">3 hours ago</p>
               </div>
             </div>
