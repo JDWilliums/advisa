@@ -29,13 +29,7 @@ export default function AuthPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const router = useRouter();
   const { darkMode, toggleDarkMode, mounted } = useDarkMode();
-  const { user, loading, error: authError, signInWithEmail, signInWithGoogle, createUser, debugAuthState } = useAuth();
-
-  // Debug auth state on mount
-  useEffect(() => {
-    console.log("Auth page mounted, checking auth state");
-    debugAuthState();
-  }, [debugAuthState]);
+  const { user, loading, error: authError, signInWithEmail, signInWithGoogle, createUser } = useAuth();
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -99,19 +93,6 @@ export default function AuthPage() {
       }
       setIsLoading(false);
     }
-  };
-
-  // For debugging - add a button to check auth state
-  const checkAuthState = () => {
-    console.log("Manual auth state check requested");
-    debugAuthState();
-  };
-
-  // For development only - use a test account
-  const useTestAccount = () => {
-    setEmail("test@example.com");
-    setPassword("password123");
-    console.log("Test account credentials filled in");
   };
 
   // Toggle between login and registration
@@ -306,28 +287,6 @@ export default function AuthPage() {
               {isRegistering ? 'Sign in' : 'Create one now'}
             </button>
           </p>
-          
-          {/* Debug buttons - only visible in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 text-center flex justify-center space-x-2">
-              <button
-                onClick={checkAuthState}
-                className={`text-xs px-2 py-1 rounded ${
-                  darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Debug Auth
-              </button>
-              <button
-                onClick={useTestAccount}
-                className={`text-xs px-2 py-1 rounded ${
-                  darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Use Test Account
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

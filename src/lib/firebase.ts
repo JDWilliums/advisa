@@ -45,6 +45,13 @@ try {
   console.log("Firebase initialized successfully");
   console.log("Auth domain:", auth.config.authDomain);
   console.log("Current user:", auth.currentUser ? auth.currentUser.email : "No user");
+  
+  // Log available auth providers
+  console.log("Available auth methods:", {
+    emailPassword: true,
+    google: true,
+    // Add other providers as needed
+  });
 } catch (error) {
   console.error("Error initializing Firebase:", error);
   throw error; // Re-throw to make the error visible

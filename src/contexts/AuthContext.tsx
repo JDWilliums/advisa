@@ -222,25 +222,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         include_granted_scopes: 'true'
       });
       
-      // First try with redirect (better for mobile)
+      // Use popup instead of redirect for better compatibility
       try {
-        console.log("Starting Google sign-in redirect...");
-        await signInWithRedirect(auth, provider);
-        console.log("Redirecting to Google sign-in...");
-        // The redirect will happen, and the result will be handled in the useEffect above
-      } catch (redirectError) {
-        // If redirect fails, fall back to popup
-        console.error("Redirect sign-in failed, falling back to popup:", redirectError);
+        console.log("Starting Google sign-in popup...");
+        const result = await signInWithPopup(auth, provider);
+        console.log("Popup sign-in successful:", result.user.email);
+        setUser(result.user);
+        router.push("/dashboard");
+      } catch (popupError) {
+        console.error("Popup sign-in failed, falling back to redirect:", popupError);
         
+        // If popup fails, fall back to redirect
         try {
-          console.log("Starting Google sign-in popup...");
-          const result = await signInWithPopup(auth, provider);
-          console.log("Popup sign-in successful:", result.user.email);
-          setUser(result.user);
-          router.push("/dashboard");
-        } catch (popupError) {
-          console.error("Popup sign-in also failed:", popupError);
-          throw popupError; // Re-throw to be caught by the outer catch
+          console.log("Starting Google sign-in redirect...");
+          await signInWithRedirect(auth, provider);
+          console.log("Redirecting to Google sign-in...");
+          // The redirect will happen, and the result will be handled in the useEffect above
+        } catch (redirectError) {
+          console.error("Redirect sign-in also failed:", redirectError);
+          throw redirectError; // Re-throw to be caught by the outer catch
         }
       }
     } catch (error) {
@@ -248,7 +248,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error instanceof Error) {
         console.error("Error details:", error.message, error.stack);
-        setError(`Google sign-in error: ${error.message}`);
+        
+        // Check for specific Google auth errors
+        const errorCode = (error as any).code;
+        if (errorCode) {
+          console.error(`Firebase error code: ${errorCode}`);
+          
+          if (errorCode === 'auth/popup-blocked') {
+            setError("Popup was blocked by your browser. Please allow popups for this site or try using a different browser.");
+          } else if (errorCode === 'auth/popup-closed-by-user') {
+            setError("Sign-in popup was closed before completing the sign-in process. Please try again.");
+          } else if (errorCode === 'auth/cancelled-popup-request') {
+            setError("Multiple popup requests were triggered. Please try again.");
+          } else if (errorCode === 'auth/network-request-failed') {
+            setError("Network error occurred. Please check your internet connection and try again.");
+          } else {
+            setError(`Google sign-in error: ${error.message}`);
+          }
+        } else {
+          setError(`Google sign-in error: ${error.message}`);
+        }
       } else {
         setError("An unknown error occurred during Google sign-in");
       }
