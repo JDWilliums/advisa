@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // Industry options
@@ -50,7 +51,8 @@ export default function BusinessInfoPage() {
     businessSize: onboardingData.businessSize || "",
     location: onboardingData.location || "",
     website: onboardingData.website || "",
-    phone: onboardingData.phone || ""
+    phone: onboardingData.phone || "",
+    about: onboardingData.about || ""
   });
   
   // Form validation
@@ -65,11 +67,12 @@ export default function BusinessInfoPage() {
       businessSize: onboardingData.businessSize || "",
       location: onboardingData.location || "",
       website: onboardingData.website || "",
-      phone: onboardingData.phone || ""
+      phone: onboardingData.phone || "",
+      about: onboardingData.about || ""
     });
   }, [onboardingData]);
   
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
@@ -253,6 +256,25 @@ export default function BusinessInfoPage() {
               placeholder="(555) 123-4567"
             />
           </div>
+        </div>
+        
+        {/* Business About Section - Full Width */}
+        <div className="space-y-2">
+          <Label htmlFor="about">
+            Business Description
+            <span className="ml-1 text-sm text-gray-500">(This helps us find relevant competitors)</span>
+          </Label>
+          <Textarea
+            id="about"
+            name="about"
+            value={formData.about}
+            onChange={handleInputChange}
+            placeholder="Describe your business, products/services, target audience, and what makes you unique..."
+            className="min-h-[120px]"
+          />
+          <p className="text-sm text-gray-500">
+            A detailed description helps us provide more accurate market research and competitor analysis.
+          </p>
         </div>
         
         <div className="flex justify-between pt-4">

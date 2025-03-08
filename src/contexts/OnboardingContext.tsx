@@ -24,6 +24,7 @@ interface OnboardingData {
   location?: string;
   website?: string;
   phone?: string;
+  about?: string; // Business description/about section
   
   // Marketing Goals
   goals?: string[];
@@ -201,7 +202,9 @@ export function OnboardingProvider({ children, initialStep = "welcome" }: Onboar
       const dataToSave = {
         ...onboardingData,
         email: user.email || onboardingData.email || 'unknown@example.com',
-        displayName: onboardingData.displayName || user.displayName || undefined
+        displayName: onboardingData.displayName || user.displayName || undefined,
+        // Map the 'about' field to the 'bio' field in UserProfile
+        bio: onboardingData.about
       };
       
       // Log the data we're about to save
