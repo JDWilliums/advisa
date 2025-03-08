@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { 
   User, 
   signInWithEmailAndPassword, 
@@ -18,9 +18,17 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
+import { 
+  createUserProfile, 
+  getUserProfile, 
+  hasCompletedOnboarding, 
+  completeOnboarding,
+  UserProfile 
+} from "@/lib/userService";
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   error: string | null;
   signInWithEmail: (email: string, password: string) => Promise<void>;
@@ -28,6 +36,8 @@ interface AuthContextType {
   createUser: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   debugAuthState: () => void;
+  checkOnboardingStatus: () => Promise<boolean>;
+  refreshUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -42,6 +52,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -58,12 +69,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAnonymous: user.isAnonymous,
         providerData: user.providerData
       } : null,
+      userProfile: userProfile ? {
+        hasCompletedOnboarding: userProfile.hasCompletedOnboarding,
+        businessName: userProfile.businessName,
+        industry: userProfile.industry
+      } : null,
       loading,
       error,
       currentPath: pathname,
       currentAuthUser: auth.currentUser ? auth.currentUser.email : "No current auth user"
     });
   };
+
+  // Fetch user profile data
+  const fetchUserProfile = useCallback(async (userId: string) => {
+    try {
+      console.log("Fetching user profile for:", userId);
+      const profile = await getUserProfile(userId);
+      
+      // If no profile exists, create one
+      if (!profile) {
+        console.log("No profile found, creating a new one");
+        const newProfile = await createUserProfile(
+          userId, 
+          user?.email || 'unknown@example.com'
+        );
+        setUserProfile(newProfile);
+        return newProfile;
+      }
+      
+      console.log("Profile found:", profile);
+      setUserProfile(profile);
+      return profile;
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return null;
+    }
+  }, [user?.email, setUserProfile]);
+
+  // Refresh user profile data
+  const refreshUserProfile = useCallback(async () => {
+    if (!user) return;
+    await fetchUserProfile(user.uid);
+  }, [user, fetchUserProfile]);
+
+  // Check if user has completed onboarding
+  const checkOnboardingStatus = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      const completed = await hasCompletedOnboarding(user.uid);
+      return completed;
+    } catch (error) {
+      console.error("Error checking onboarding status:", error);
+      return false;
+    }
+  }, [user]);
 
   // Set persistence to LOCAL (this helps with page refreshes)
   useEffect(() => {
@@ -125,30 +186,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("Setting up auth state listener");
     console.log("Firebase auth object:", auth ? "exists" : "does not exist");
     
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log("Auth state changed:", currentUser ? `User: ${currentUser.email}` : "No user");
       
       setUser(currentUser);
-      setLoading(false);
       
-      // Handle routing based on auth state
+      // Fetch user profile if user is authenticated
       if (currentUser) {
+        const profile = await fetchUserProfile(currentUser.uid);
+        
+        // Check for pending onboarding data in localStorage
+        const pendingData = localStorage.getItem('pendingOnboardingData');
+        if (pendingData && profile && !profile.hasCompletedOnboarding) {
+          try {
+            console.log("Found pending onboarding data in localStorage");
+            const parsedData = JSON.parse(pendingData);
+            
+            // Save the pending data to Firestore
+            await completeOnboarding(currentUser.uid, parsedData);
+            console.log("Successfully saved pending onboarding data to Firestore");
+            
+            // Refresh the user profile
+            await fetchUserProfile(currentUser.uid);
+            
+            // Clear the pending data
+            localStorage.removeItem('pendingOnboardingData');
+          } catch (error) {
+            console.error("Error saving pending onboarding data:", error);
+          }
+        }
+        
+        // Handle routing based on auth state and onboarding status
         console.log("User is authenticated, current path:", pathname);
         
-        // If on auth page and authenticated, redirect to dashboard
+        // If on auth page and authenticated, redirect to dashboard or onboarding
         if (pathname === "/" || pathname === "/auth" || pathname === "/auth/signin") {
-          console.log("Redirecting authenticated user to dashboard");
-          router.push("/dashboard");
+          if (profile && profile.hasCompletedOnboarding) {
+            console.log("Redirecting authenticated user to dashboard");
+            router.push("/dashboard");
+          } else {
+            console.log("Redirecting authenticated user to onboarding");
+            router.push("/onboarding");
+          }
         }
       } else {
+        setUserProfile(null);
         console.log("User is not authenticated, current path:", pathname);
         
-        // If on dashboard and not authenticated, redirect to auth
-        if (pathname?.startsWith("/dashboard")) {
+        // If on dashboard or onboarding and not authenticated, redirect to auth
+        if (pathname?.startsWith("/dashboard") || pathname?.startsWith("/onboarding")) {
           console.log("Redirecting unauthenticated user to auth page");
           router.push("/");
         }
       }
+      
+      setLoading(false);
     }, (error) => {
       // This is the error handler for onAuthStateChanged
       console.error("Auth state change error:", error);
@@ -161,7 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Cleaning up auth state listener");
       unsubscribe();
     };
-  }, [router, pathname]);
+  }, [router, pathname, fetchUserProfile]);
 
   // Sign in with email and password
   const signInWithEmail = async (email: string, password: string) => {
@@ -176,6 +268,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("Email sign-in successful:", userCredential.user.email);
       setUser(userCredential.user);
+      
+      // Fetch or create user profile
+      await fetchUserProfile(userCredential.user.uid);
+      
       router.push("/dashboard");
     } catch (error) {
       console.error("Email sign-in error:", error);
@@ -210,89 +306,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
+      const provider = new GoogleAuthProvider();
+      
       // Set persistence to LOCAL before signing in
       await setPersistence(auth, browserLocalPersistence);
       
-      const provider = new GoogleAuthProvider();
-      // Add select_account to force the account selection prompt
-      provider.setCustomParameters({ 
-        prompt: 'select_account',
-        // Add additional parameters to help with CORS issues
-        auth_type: 'rerequest',
-        include_granted_scopes: 'true'
-      });
+      // Use popup for better UX
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google sign-in successful:", result.user.email);
+      setUser(result.user);
       
-      // Use popup instead of redirect for better compatibility
-      try {
-        console.log("Starting Google sign-in popup...");
-        const result = await signInWithPopup(auth, provider);
-        console.log("Popup sign-in successful:", result.user.email);
-        setUser(result.user);
-        router.push("/dashboard");
-      } catch (popupError) {
-        console.error("Popup sign-in failed, falling back to redirect:", popupError);
-        
-        // If popup fails, fall back to redirect
-        try {
-          console.log("Starting Google sign-in redirect...");
-          await signInWithRedirect(auth, provider);
-          console.log("Redirecting to Google sign-in...");
-          // The redirect will happen, and the result will be handled in the useEffect above
-        } catch (redirectError) {
-          console.error("Redirect sign-in also failed:", redirectError);
-          throw redirectError; // Re-throw to be caught by the outer catch
-        }
-      }
+      // Fetch or create user profile
+      await fetchUserProfile(result.user.uid);
+      
+      router.push("/dashboard");
     } catch (error) {
       console.error("Google sign-in error:", error);
       
       if (error instanceof Error) {
-        console.error("Error details:", error.message, error.stack);
-        
-        // Check for specific Google auth errors
+        // Log specific Firebase error codes for debugging
         const errorCode = (error as any).code;
-        if (errorCode) {
-          console.error(`Firebase error code: ${errorCode}`);
-          
-          if (errorCode === 'auth/popup-blocked') {
-            setError("Popup was blocked by your browser. Please allow popups for this site or try using a different browser.");
-          } else if (errorCode === 'auth/popup-closed-by-user') {
-            setError("Sign-in popup was closed before completing the sign-in process. Please try again.");
-          } else if (errorCode === 'auth/cancelled-popup-request') {
-            setError("Multiple popup requests were triggered. Please try again.");
-          } else if (errorCode === 'auth/network-request-failed') {
-            setError("Network error occurred. Please check your internet connection and try again.");
-          } else {
-            setError(`Google sign-in error: ${error.message}`);
-          }
+        console.error(`Firebase error code: ${errorCode}`);
+        
+        // Provide user-friendly error messages
+        if (errorCode === 'auth/popup-closed-by-user') {
+          setError("Sign-in was cancelled. Please try again.");
+        } else if (errorCode === 'auth/popup-blocked') {
+          setError("Pop-up was blocked by your browser. Please allow pop-ups for this site.");
         } else {
-          setError(`Google sign-in error: ${error.message}`);
+          setError(error.message);
         }
       } else {
         setError("An unknown error occurred during Google sign-in");
       }
+    } finally {
       setLoading(false);
     }
   };
 
-  // Sign out
+  // Logout
   const logout = async () => {
-    console.log("Attempting to sign out");
+    console.log("Attempting to log out");
     setLoading(true);
+    setError(null);
     
     try {
       await signOut(auth);
-      console.log("Sign out successful");
+      console.log("Logout successful");
       setUser(null);
+      setUserProfile(null);
       router.push("/");
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.error("Logout error:", error);
       
       if (error instanceof Error) {
-        console.error("Error details:", error.message, error.stack);
         setError(`Logout error: ${error.message}`);
       } else {
-        setError("An unknown error occurred during sign-out");
+        setError("An unknown error occurred during logout");
       }
     } finally {
       setLoading(false);
@@ -312,7 +382,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       console.log("User creation successful:", userCredential.user.email);
       setUser(userCredential.user);
-      router.push("/dashboard");
+      
+      // Create user profile in Firestore
+      await createUserProfile(userCredential.user.uid, userCredential.user.email || '');
+      
+      // Redirect to onboarding instead of dashboard
+      router.push("/onboarding");
     } catch (error) {
       console.error("User creation error:", error);
       
@@ -341,13 +416,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value = {
     user,
+    userProfile,
     loading,
     error,
     signInWithEmail,
     signInWithGoogle,
     createUser,
     logout,
-    debugAuthState
+    debugAuthState,
+    checkOnboardingStatus,
+    refreshUserProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

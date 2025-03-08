@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -20,24 +20,17 @@ import {
   PieChart,
   Eye,
   Download,
-  Phone
+  Phone,
+  Building2,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserProfile, getUserProfile, createUserProfile } from '@/lib/userService';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 
-// Type definitions
-interface ProfileData {
-  name: string;
-  jobTitle: string;
-  company: string;
-  location: string;
-  website: string;
-  email: string;
-  phone: string;
-  bio: string;
-  joinDate: string;
-  avatarUrl: string;
-  skills: string[];
-}
-
+// Type definitions for sample data
 interface Report {
   id: string;
   title: string;
@@ -57,25 +50,7 @@ interface Project {
   client: string;
 }
 
-// Sample data
-const profileData: ProfileData = {
-  name: 'Alex Johnson',
-  jobTitle: 'Marketing Director',
-  company: 'Acme Inc.',
-  location: 'New York, NY',
-  website: 'alexjohnson.example.com',
-  email: 'alex.johnson@example.com',
-  phone: '(555) 123-4567',
-  bio: 'Marketing professional with over 10 years of experience specializing in digital strategy and analytics. Passionate about data-driven marketing and emerging technologies in the MarTech space.',
-  joinDate: 'January 2021',
-  avatarUrl: '/api/placeholder/200/200',
-  skills: [
-    'Digital Marketing', 'SEO', 'Content Strategy', 'Social Media', 
-    'Marketing Analytics', 'Data Visualization', 'Campaign Management',
-    'A/B Testing', 'Marketing Automation', 'Brand Strategy'
-  ]
-};
-
+// Sample data for reports and projects
 const reportsData: Report[] = [
   {
     id: '1',
@@ -145,6 +120,97 @@ const projectsData: Project[] = [
 // Profile Page Component
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('overview');
+  const { user, refreshUserProfile } = useAuth();
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [permissionError, setPermissionError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  // Fetch user profile data directly from Firestore
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const profile = await getUserProfile(user.uid);
+        console.log("Fetched profile data:", profile);
+        
+        if (!profile) {
+          // If no profile exists, create one
+          console.log("No profile found, creating a new one");
+          const newProfile = await createUserProfile(
+            user.uid, 
+            user.email || 'unknown@example.com'
+          );
+          setProfileData(newProfile);
+        } else {
+          setProfileData(profile);
+        }
+        
+        setError(null);
+        setPermissionError(false);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+        
+        // Check if it's a permissions error
+        if (err instanceof Error && err.message.includes('permission')) {
+          setPermissionError(true);
+          setError("Firestore permissions error. Please update your security rules.");
+        } else {
+          setError("Failed to load profile data. Please try refreshing the page.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
+  
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    if (!user) return;
+    
+    try {
+      setRefreshing(true);
+      setError(null);
+      
+      // Try to refresh via AuthContext first
+      await refreshUserProfile();
+      
+      // Also fetch directly to update local state
+      const profile = await getUserProfile(user.uid);
+      
+      if (!profile) {
+        // If no profile exists, create one
+        console.log("No profile found during refresh, creating a new one");
+        const newProfile = await createUserProfile(
+          user.uid, 
+          user.email || 'unknown@example.com'
+        );
+        setProfileData(newProfile);
+      } else {
+        console.log("Profile refreshed:", profile);
+        setProfileData(profile);
+      }
+      
+    } catch (err) {
+      console.error("Error refreshing profile:", err);
+      setError("Failed to refresh profile data. Please try again.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  
+  // Format marketing goals and channels for display
+  const formatLabel = (id: string): string => {
+    return id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
 
   // Get badge color based on tool type
   const getToolTypeBadgeColor = (toolType: string): string => {
@@ -176,6 +242,135 @@ const ProfilePage: React.FC = () => {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading profile data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show permissions error state with instructions
+  if (permissionError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <AlertTriangle className="h-6 w-6 text-amber-500 mr-2" />
+            <h2 className="text-xl font-semibold text-amber-800 dark:text-amber-300">Firestore Permissions Error</h2>
+          </div>
+          
+          <p className="text-amber-800 dark:text-amber-300 mb-4">
+            Your Firestore security rules are currently set to deny all access. To fix this issue, please update your Firestore security rules in the Firebase Console.
+          </p>
+          
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-md mb-4 overflow-x-auto">
+            <pre className="text-sm text-gray-800 dark:text-gray-200">
+{`rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default rule - deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // User profiles - allow users to read and write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}`}
+            </pre>
+          </div>
+          
+          <p className="text-amber-800 dark:text-amber-300 mb-4">
+            These rules will allow authenticated users to read and write only their own profile data.
+          </p>
+          
+          <ol className="list-decimal list-inside text-amber-800 dark:text-amber-300 mb-4 space-y-2">
+            <li>Go to the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline">Firebase Console</a></li>
+            <li>Select your project</li>
+            <li>Click on "Firestore Database" in the left sidebar</li>
+            <li>Click on the "Rules" tab</li>
+            <li>Replace the current rules with the ones above</li>
+            <li>Click "Publish"</li>
+          </ol>
+          
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-2"
+          >
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show general error state
+  if (error && !permissionError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+          <p className="text-red-800 dark:text-red-300 mb-4">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="destructive"
+          >
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show no profile data state with refresh button
+  if (!profileData) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
+          <h2 className="text-xl font-semibold text-blue-800 dark:text-blue-300 mb-4">No Profile Data Found</h2>
+          <p className="text-blue-800 dark:text-blue-300 mb-6">
+            We couldn't find your profile data. This might be because you haven't completed the onboarding process yet, 
+            or because your profile hasn't been created in the database.
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Button 
+              onClick={handleRefresh} 
+              disabled={refreshing}
+              className="gap-2"
+            >
+              {refreshing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh Profile
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={() => window.location.href = '/onboarding'}
+              variant="outline"
+            >
+              Go to Onboarding
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Render content based on active tab
   const renderTabContent = () => {
     switch (activeTab) {
@@ -185,224 +380,253 @@ const ProfilePage: React.FC = () => {
             {/* Bio Section */}
             <div className="bg-card border border-border rounded-lg p-5">
               <h3 className="text-lg font-semibold text-foreground mb-3">About</h3>
-              <p className="text-muted-foreground leading-relaxed">{profileData.bio}</p>
+              <p className="text-muted-foreground leading-relaxed">
+                {profileData?.bio || 'No bio information available. You can add your bio in the profile settings.'}
+              </p>
             </div>
             
-            {/* Skills Section */}
+            {/* Business Information */}
             <div className="bg-card border border-border rounded-lg p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Skills</h3>
-              <div className="flex flex-wrap gap-2">
-                {profileData.skills.map((skill, index) => (
-                  <span 
-                    key={index}
-                    className="px-3 py-1 bg-accent/50 text-foreground rounded-md text-sm"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-            
-            {/* Experience Section */}
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Experience</h3>
-              <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground mb-3">Business Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="flex justify-between">
-                    <div>
-                      <h4 className="font-medium text-foreground">Marketing Director</h4>
-                      <p className="text-sm text-muted-foreground">Acme Inc.</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">2021 - Present</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Leading the marketing department and developing strategies across digital and traditional channels.
-                  </p>
+                  <p className="text-sm text-muted-foreground">Business Name</p>
+                  <p className="text-foreground">{profileData?.businessName || 'Not specified'}</p>
                 </div>
-                <div className="pt-4 border-t border-border">
-                  <div className="flex justify-between">
-                    <div>
-                      <h4 className="font-medium text-foreground">Senior Marketing Manager</h4>
-                      <p className="text-sm text-muted-foreground">TechCorp</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">2018 - 2021</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Managed digital marketing campaigns and analytics for B2B technology products.
-                  </p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Industry</p>
+                  <p className="text-foreground">{profileData?.industry || 'Not specified'}</p>
                 </div>
-                <div className="pt-4 border-t border-border">
-                  <div className="flex justify-between">
-                    <div>
-                      <h4 className="font-medium text-foreground">Marketing Specialist</h4>
-                      <p className="text-sm text-muted-foreground">Global Innovations</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">2015 - 2018</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Focused on content marketing and social media strategy for consumer products.
-                  </p>
+                <div>
+                  <p className="text-sm text-muted-foreground">Business Size</p>
+                  <p className="text-foreground">{profileData?.businessSize || 'Not specified'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Location</p>
+                  <p className="text-foreground">{profileData?.location || 'Not specified'}</p>
                 </div>
               </div>
+            </div>
+            
+            {/* Marketing Goals Section */}
+            <div className="bg-card border border-border rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-foreground mb-3">Marketing Goals</h3>
+              {profileData?.goals && profileData.goals.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profileData.goals.map((goal, index) => (
+                    <span 
+                      key={index}
+                      className="px-3 py-1 bg-primary/10 text-primary rounded-md text-sm"
+                    >
+                      {formatLabel(goal)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No marketing goals specified.</p>
+              )}
+            </div>
+            
+            {/* Marketing Channels Section */}
+            <div className="bg-card border border-border rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-foreground mb-3">Marketing Channels</h3>
+              {profileData?.marketingChannels && profileData.marketingChannels.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profileData.marketingChannels.map((channel, index) => (
+                    <span 
+                      key={index}
+                      className="px-3 py-1 bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground rounded-md text-sm border border-primary/20 dark:border-primary/40"
+                    >
+                      {formatLabel(channel)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No marketing channels specified.</p>
+              )}
             </div>
           </div>
         );
-      
       case 'reports':
         return (
-          <div className="bg-card border border-border rounded-lg p-5">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Reports</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-border">
-                <thead>
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Title</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Type</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Format</th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Size</th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {reportsData.map((report) => (
-                    <tr key={report.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div>
-                          <div className="font-medium text-foreground">{report.title}</div>
-                          <div className="text-xs text-muted-foreground mt-1">{report.description}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getToolTypeBadgeColor(report.toolType)}`}>
-                          {report.toolType}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
-                        {report.date}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
-                        {report.format}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-muted-foreground">
-                        {report.fileSize}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          type="button"
-                          className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {reportsData.map(report => (
+                <div key={report.id} className="bg-card border border-border rounded-lg p-5 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-lg font-semibold text-foreground">{report.title}</h3>
+                    <span className={`text-xs px-2 py-1 rounded-full ${getToolTypeBadgeColor(report.toolType)}`}>
+                      {report.toolType}
+                    </span>
+                  </div>
+                  <p className="text-muted-foreground mb-4">{report.description}</p>
+                  <div className="flex justify-between items-center text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {report.date}
+                    </div>
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 mr-1" />
+                      {report.fileSize} • {report.format}
+                    </div>
+                    <button className="text-primary hover:text-primary/80 flex items-center">
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         );
-      
       case 'projects':
         return (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Projects</h3>
-            {projectsData.map((project) => (
-              <div key={project.id} className="bg-card border border-border rounded-lg p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-foreground">{project.title}</h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(project.status)}`}>
-                    {project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+          <div className="space-y-6">
+            {projectsData.map(project => (
+              <div key={project.id} className="bg-card border border-border rounded-lg p-5 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
+                  <span className={`text-xs px-2 py-1 rounded-full ${getStatusBadgeColor(project.status)}`}>
+                    {project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('-', ' ')}
                   </span>
                 </div>
                 <p className="text-muted-foreground mb-4">{project.description}</p>
-                <div className="flex justify-between text-sm text-muted-foreground">
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
                   <div className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" /> 
-                    <span>{project.date}</span>
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {project.date}
                   </div>
                   <div className="flex items-center">
-                    <Briefcase className="h-4 w-4 mr-1" /> 
-                    <span>Client: {project.client}</span>
+                    <Briefcase className="h-4 w-4 mr-1" />
+                    Client: {project.client}
                   </div>
+                  <button className="text-primary hover:text-primary/80 flex items-center">
+                    <Eye className="h-4 w-4 mr-1" />
+                    View Details
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         );
-      
       default:
-        return <div>Select a tab</div>;
+        return null;
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      {/* Profile Header */}
+    <div className="container mx-auto px-4 py-8">
       <div className="bg-card border border-border rounded-lg overflow-hidden mb-6">
+        {/* Cover Image */}
+        <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-600"></div>
+        
+        {/* Profile Info */}
         <div className="p-6">
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col md:flex-row items-start md:items-end -mt-20 mb-4">
             {/* Avatar */}
-            <div className="flex-shrink-0">
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-background">
-                <img
-                  src={profileData.avatarUrl}
-                  alt={profileData.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            <div className="w-24 h-24 rounded-full border-4 border-background bg-muted overflow-hidden mr-4 relative">
+              <Image 
+                src={profileData?.avatarUrl || '/api/placeholder/200/200'} 
+                alt={profileData?.displayName || 'User'} 
+                fill
+                sizes="(max-width: 768px) 96px, 96px"
+                className="object-cover"
+                priority
+              />
             </div>
             
-            {/* Profile Info */}
-            <div className="flex-grow">
-              <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">{profileData.name}</h1>
-                  <p className="text-lg text-muted-foreground">{profileData.jobTitle} at {profileData.company}</p>
-                </div>
-                <button
-                  type="button"
-                  className="mt-2 md:mt-0 px-3 py-2 bg-accent text-foreground border border-border rounded-md hover:bg-accent/80 transition-colors inline-flex items-center"
-                >
-                  <Edit2 className="h-4 w-4 mr-2" /> Edit Profile
-                </button>
+            {/* Name and Title */}
+            <div className="mt-4 md:mt-0 flex-1">
+              <h1 className="text-2xl font-bold text-foreground">
+                {profileData?.displayName || user?.email?.split('@')[0] || 'User'}
+              </h1>
+              <p className="text-muted-foreground">
+                {profileData?.businessName ? `${profileData.businessName}` : 'Your Business'}
+                {profileData?.industry ? ` • ${profileData.industry}` : ''}
+              </p>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="mt-4 md:mt-0 flex space-x-2">
+              <Button 
+                onClick={handleRefresh} 
+                variant="outline"
+                size="sm"
+                disabled={refreshing}
+                className="gap-1"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
+              <Button 
+                className="gap-2"
+                size="sm"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit Profile
+              </Button>
+            </div>
+          </div>
+          
+          {/* Contact Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 py-4 border-t border-border">
+            {profileData?.email && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>{profileData.email}</span>
               </div>
-              
-              {/* Contact Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 gap-x-4 text-sm">
-                <div className="flex items-center text-muted-foreground">
-                  <MapPin className="h-4 w-4 mr-2" /> {profileData.location}
-                </div>
-                <div className="flex items-center text-muted-foreground">
-                  <Mail className="h-4 w-4 mr-2" /> {profileData.email}
-                </div>
-                <div className="flex items-center text-muted-foreground">
-                  <Phone className="h-4 w-4 mr-2" /> {profileData.phone}
-                </div>
-                <div className="flex items-center text-muted-foreground">
-                  <Globe className="h-4 w-4 mr-2" /> {profileData.website}
-                </div>
+            )}
+            {profileData?.location && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>{profileData.location}</span>
               </div>
-              
-              {/* Professional Links */}
-              <div className="flex items-center space-x-2 mt-4">
-                <a 
-                  href="https://linkedin.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-2 text-muted-foreground hover:text-foreground"
+            )}
+            {profileData?.website && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                <a href={profileData.website.startsWith('http') ? profileData.website : `https://${profileData.website}`} 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="hover:text-primary"
                 >
-                  <Linkedin className="h-5 w-5" />
+                  {profileData.website.replace(/^https?:\/\//, '')}
                 </a>
-                <a 
-                  href="https://github.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="p-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Github className="h-5 w-5" />
-                </a>
               </div>
+            )}
+            {profileData?.phone && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>{profileData.phone}</span>
+              </div>
+            )}
+            {profileData?.createdAt && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Joined {profileData.createdAt.toDate ? profileData.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Social Links */}
+          <div className="flex border-t border-border pt-4">
+            <div className="flex space-x-2">
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 text-muted-foreground hover:text-foreground"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-2 text-muted-foreground hover:text-foreground"
+              >
+                <Github className="h-5 w-5" />
+              </a>
             </div>
           </div>
         </div>
