@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
 import { getAuth, connectAuthEmulator, Auth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -32,7 +32,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.proj
 
 let app;
 let auth: Auth;
-let db;
+let db: Firestore;
 let storage;
 
 try {
