@@ -17,6 +17,7 @@ export interface SEOResult {
     analyzedUrl: string;
     timestamp: string;
     analysisDepth: string;
+    warning?: string; // Optional warning message for fallback scenarios
   }
   
   export interface AnalysisBase {
