@@ -86,7 +86,7 @@ export async function launchBrowser(): Promise<Browser> {
       // If local Chrome not found, try to use chrome-aws-lambda as fallback
       try {
         // Use dynamic import with type assertion to bypass TypeScript errors
-        // @ts-ignore - Ignore the module not found error
+        // @ts-expect-error - Ignore the module not found error
         const chromium = await import('chrome-aws-lambda') as any;
         
         return await puppeteerCore.launch({
