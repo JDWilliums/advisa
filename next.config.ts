@@ -17,25 +17,16 @@ const nextConfig: NextConfig = {
     return config;
   },
   // Further restrict allowed packages to be used in Next.js Edge or Serverless functions
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   serverExternalPackages: ['puppeteer', 'puppeteer-core', 'chrome-aws-lambda', 'jsdom'],
+  
   // Make environment variables available to the server
   env: {
     USE_MOCK_SEO: process.env.USE_MOCK_SEO,
-=======
+  },
+  
+  // Experimental features
   experimental: {
-    serverComponentsExternalPackages: ['puppeteer', 'puppeteer-core', 'chrome-aws-lambda', 'jsdom'],
->>>>>>> Stashed changes
-=======
-  experimental: {
-    serverComponentsExternalPackages: ['puppeteer', 'puppeteer-core', 'chrome-aws-lambda', 'jsdom'],
->>>>>>> Stashed changes
-=======
-  experimental: {
-    serverComponentsExternalPackages: ['puppeteer', 'puppeteer-core', 'chrome-aws-lambda', 'jsdom'],
->>>>>>> Stashed changes
+    // Add any future experimental features here
   },
 };
 

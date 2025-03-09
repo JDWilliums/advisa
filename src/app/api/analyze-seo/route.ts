@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 // Import the analyzer function dynamically to prevent client-side bundling issues
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import { analyzeSEO } from '@/app/dashboard/seo-content/api/analyze-seo';
 import { AnalysisDepth } from '@/app/dashboard/seo-content/types/seo';
 

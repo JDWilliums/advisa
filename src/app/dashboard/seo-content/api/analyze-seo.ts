@@ -1,25 +1,8 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import { AnalysisDepth, SEOResult } from '../types/seo';
-import { launchBrowser, createPage } from './browser-launcher';
-import { JSDOM } from 'jsdom';
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import puppeteer from 'puppeteer-core';
-import chrome from 'chrome-aws-lambda'; // For serverless environments
 import { JSDOM } from 'jsdom';
 import { AnalysisDepth, SEOResult } from '../types/seo';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Import analysis modules
 import { analyzeMetaTags } from './analysis/meta-tags';
@@ -34,9 +17,6 @@ import { analyzeAccessibility } from './analysis/accessibility';
 import { analyzeStructuredData } from './analysis/structured-data';
 import { calculateOverallScore, generateRecommendations } from './analysis/scoring';
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 // Mock data for development to avoid server-side dependencies
 const getMockSEOResult = (url: string, depth: AnalysisDepth): SEOResult => {
   return {
@@ -168,52 +148,79 @@ export async function analyzeSEO(url: string, depth: AnalysisDepth = 'standard')
     return getMockSEOResult(url, depth);
   }
 
-  // Use our browser launcher instead of directly importing puppeteer
   let browser;
   let page;
   
   try {
-    // Launch browser using our launcher
-    browser = await launchBrowser();
+    // Try standard puppeteer - make sure to run npm install puppeteer 
+    // (not puppeteer-core) to have Chromium downloaded automatically
+    try {
+      // Attempt to use puppeteer directly (which has bundled Chromium)
+      const puppeteerStandard = require('puppeteer');
+      console.log('Using standard Puppeteer with bundled Chromium');
+      browser = await puppeteerStandard.launch({
+        headless: "new",
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+    } catch (error) {
+      console.log('Standard Puppeteer not available, trying with local Chrome installation');
+      
+      // Look for a local Chrome installation
+      let chromePath = null;
+      
+      if (process.platform === 'win32') {
+        // Windows
+        const possiblePaths = [
+          'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+          'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+          process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe'
+        ];
+        
+        for (const path of possiblePaths) {
+          try {
+            if (fs.existsSync(path)) {
+              chromePath = path;
+              break;
+            }
+          } catch (e) {}
+        }
+      } else if (process.platform === 'darwin') {
+        // macOS
+        if (fs.existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')) {
+          chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        }
+      } else {
+        // Linux
+        const possiblePaths = [
+          '/usr/bin/google-chrome',
+          '/usr/bin/chromium-browser',
+          '/usr/bin/chromium'
+        ];
+        
+        for (const path of possiblePaths) {
+          try {
+            if (fs.existsSync(path)) {
+              chromePath = path;
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+      
+      if (chromePath) {
+        console.log('Using local Chrome installation:', chromePath);
+        browser = await puppeteer.launch({
+          headless: true,
+          executablePath: chromePath,
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+      } else {
+        throw new Error('No Chrome installation found. Please install Chrome or run "npm install puppeteer" to download Chromium.');
+      }
+    }
     
-    // Create a configured page
-    page = await createPage(browser);
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-export async function analyzeSEO(url: string, depth: AnalysisDepth = 'standard'): Promise<SEOResult> {
-  // Set up browser with appropriate options for environment
-  let browser;
-  
-  // For serverless environments (Vercel, AWS Lambda)
-  if (process.env.NODE_ENV === 'production') {
-    browser = await puppeteer.launch({
-      args: chrome.args,
-      executablePath: await chrome.executablePath,
-      headless: chrome.headless,
-    });
-  } else {
-    // For local development
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
-  }
-
-  let page;
-  
-  try {
     // Create a new page
     page = await browser.newPage();
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     
     // Set viewport to desktop size
     await page.setViewport({
@@ -256,20 +263,8 @@ export async function analyzeSEO(url: string, depth: AnalysisDepth = 'standard')
     });
     
     // Wait for any remaining JavaScript to execute
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    // Puppeteer v9 doesn't have waitForNetworkIdle, so we use a timeout instead
+    // Use a timeout as a more compatible alternative to waitForNetworkIdle
     await new Promise(resolve => setTimeout(resolve, 2000));
-=======
-    await page.waitForNetworkIdle();
->>>>>>> Stashed changes
-=======
-    await page.waitForNetworkIdle();
->>>>>>> Stashed changes
-=======
-    await page.waitForNetworkIdle();
->>>>>>> Stashed changes
     
     // Get HTML content for analysis
     const htmlContent = await page.content();

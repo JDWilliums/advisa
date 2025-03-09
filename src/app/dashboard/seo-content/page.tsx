@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import SEOAnalyzer from "./components/SEOAnalyzer";
-import getApiClient from "./api/api-client";
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import {
   Card,
   CardContent,
@@ -78,11 +68,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import SEOAnalyzer from "./components/SEOAnalyzer";
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
-// Add back the inline interface to avoid type conflicts
+// Interface for SEO Result
 interface SEOResult {
   overallScore: number;
   categories: {
@@ -160,10 +147,6 @@ interface SEOResult {
   timestamp?: string;
   analysisDepth?: string;
 }
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 // Mock data for keyword analysis
 const keywordsData = [
@@ -354,97 +337,6 @@ const contentPerformance = [
   },
 ];
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-// Add this interface with your other types/interfaces
-interface SEOResult {
-  overallScore: number;
-  categories: {
-    metaTags: {
-      score: number;
-      title: {
-        exists: boolean;
-        length: number;
-        optimal: boolean;
-        value: string;
-      };
-      description: {
-        exists: boolean;
-        length: number;
-        optimal: boolean;
-        value: string;
-      };
-      keywords: {
-        exists: boolean;
-      };
-    };
-    headings: {
-      score: number;
-      h1: {
-        count: number;
-        optimal: boolean;
-        values: string[];
-      };
-      h2: {
-        count: number;
-        optimal: boolean;
-        values: string[];
-      };
-      h3: {
-        count: number;
-        optimal: boolean;
-      };
-      structure: string;
-    };
-    content: {
-      score: number;
-      wordCount: number;
-      paragraphs: number;
-      readabilityScore: string;
-      keywordDensity: string;
-      issuesFound: string[];
-    };
-    images: {
-      score: number;
-      total: number;
-      withAlt: number;
-      withoutAlt: number;
-      largeImages: number;
-    };
-    performance: {
-      score: number;
-      loadTime: string;
-      mobileOptimized: boolean;
-      issues: string[];
-    };
-    links: {
-      score: number;
-      internal: number;
-      external: number;
-      broken: number;
-    };
-    security: {
-      score: number;
-      https: boolean;
-      issues: string[];
-    };
-  };
-  recommendations: string[];
-}
-
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 export default function SeoContentPage() {
     const [activeTab, setActiveTab] = useState("keyword-research");
     const [currentContentType, setCurrentContentType] = useState("all");
@@ -469,24 +361,8 @@ export default function SeoContentPage() {
         // Show loading state for at least 1 second to avoid UI flashing
         const startTime = Date.now();
         
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        // Make API call using the configured API client
-        const apiClient = getApiClient();
-        const response = await apiClient.post('/api/analyze-seo', { 
-=======
         // Make API call
         const response = await axios.post('/api/analyze-seo', { 
->>>>>>> Stashed changes
-=======
-        // Make API call
-        const response = await axios.post('/api/analyze-seo', { 
->>>>>>> Stashed changes
-=======
-        // Make API call
-        const response = await axios.post('/api/analyze-seo', { 
->>>>>>> Stashed changes
           url: targetUrl,
           depth: 'standard' // Can be 'basic', 'standard', or 'deep'
         });
@@ -516,9 +392,6 @@ export default function SeoContentPage() {
             setError(err.response.data.error);
           } else if (err.code === 'ECONNABORTED') {
             setError('Analysis took too long. Try analyzing a smaller site or contact support.');
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
           } else if (err.message === 'Network Error') {
             setError('Network error. Please check your connection and ensure the server is running. If this is a development environment, make sure your Next.js server is running correctly.');
             console.error('Network Error Details:', err);
@@ -527,23 +400,6 @@ export default function SeoContentPage() {
           }
         } else {
           setError(`An unexpected error occurred: ${err instanceof Error ? err.message : 'Unknown error'}`);
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-          } else {
-            setError('Failed to analyze the website. Please check the URL and try again.');
-          }
-        } else {
-          setError('An unexpected error occurred. Please try again.');
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         }
         console.error('Error analyzing website:', err);
         throw err;

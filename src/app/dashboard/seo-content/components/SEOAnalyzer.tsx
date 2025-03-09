@@ -1,40 +1,32 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertCircle, CheckCircle, Clock, ExternalLink, Layout, Image as ImageIcon, Smartphone, Search, ArrowRight, Globe, RefreshCw, Copy, Sparkles, History, Calendar, X, Download, FileJson, FileText } from 'lucide-react';
-=======
-// File: /components/SEOAnalyzer.tsx
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, ExternalLink, Layout, Image as ImageIcon, Smartphone, Search, ArrowRight, Globe, RefreshCw, Copy, Sparkles } from 'lucide-react';
->>>>>>> Stashed changes
-=======
-// File: /components/SEOAnalyzer.tsx
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, ExternalLink, Layout, Image as ImageIcon, Smartphone, Search, ArrowRight, Globe, RefreshCw, Copy, Sparkles } from 'lucide-react';
->>>>>>> Stashed changes
-=======
-// File: /components/SEOAnalyzer.tsx
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, Clock, ExternalLink, Layout, Image as ImageIcon, Smartphone, Search, ArrowRight, Globe, RefreshCw, Copy, Sparkles } from 'lucide-react';
->>>>>>> Stashed changes
+import { 
+  AlertCircle, 
+  CheckCircle, 
+  Clock, 
+  ExternalLink, 
+  Layout, 
+  Image as ImageIcon, 
+  Smartphone, 
+  Search, 
+  ArrowRight, 
+  Globe, 
+  RefreshCw, 
+  Copy, 
+  Sparkles, 
+  History, 
+  Calendar, 
+  X, 
+  Download, 
+  FileJson, 
+  FileText 
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-import { Separator } from "@/components/ui/separator";
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 // TypeScript interfaces
 interface SEOAnalyzerProps {
@@ -122,9 +114,6 @@ interface SEOResult {
     };
   };
   recommendations: string[];
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   analyzedUrl?: string;
   timestamp?: string;
 }
@@ -150,27 +139,6 @@ function SEOAnalyzer(props: SEOAnalyzerProps) {
 
   // Outside click handling for export options dropdown
   const exportOptionsRef = useRef<HTMLDivElement>(null);
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-}
-
-const SEOAnalyzer: React.FC<SEOAnalyzerProps> = (props) => {
-const [url, setUrl] = useState<string>(props.initialUrl || '');
-const [isAnalyzing, setIsAnalyzing] = useState<boolean>(props.isAnalyzing || false);
-const [results, setResults] = useState<SEOResult | null>(props.results || null);
-const [error, setError] = useState<string>(props.error || '');
-const [analysisHistory, setAnalysisHistory] = useState<Array<{url: string, date: string}>>([]);
-const [isCopying, setIsCopying] = useState<boolean>(false);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
   // Update parent state if props include setter functions
   useEffect(() => {
@@ -180,9 +148,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
     if (props.setError) props.setError(error);
   }, [url, results, isAnalyzing, error, props]);
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   // Load history from localStorage on component mount
   useEffect(() => {
     const savedHistory = localStorage.getItem('seoAnalysisHistory');
@@ -223,30 +188,11 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
     // Basic URL validation (more relaxed now that we ensure https://)
     if (!processedUrl || !processedUrl.match(/^https?:\/\/[a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}(\/.*)?$/)) {
       setError('Please enter a valid URL (e.g., example.com)');
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-  const handleAnalyze = async (): Promise<void> => {
-    // Basic URL validation
-    if (!url || !url.match(/^(http|https):\/\/[a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}(\/.*)?$/)) {
-      setError('Please enter a valid URL (e.g., https://example.com)');
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
       return;
     }
     
     setError('');
     setIsAnalyzing(true);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
     setResults(null); // Clear previous results
     
     try {
@@ -284,25 +230,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
       } else {
         setError('Failed to analyze the website. Please try again.');
       }
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-    
-    try {
-      const data = await props.analyzeSEO(url);
-      setResults(data);
-    } catch (err) {
-      setError((err as Error).message || 'Failed to analyze the website. Please try again.');
-      console.error(err);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     } finally {
       setIsAnalyzing(false);
     }
@@ -314,43 +241,13 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
     if (score >= 60) return 'text-yellow-500';
     return 'text-red-500';
   };
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  
-  const CategoryCard = ({ icon, title, score, details }: { 
-=======
 
   // Component for each SEO category
   interface CategoryCardProps {
->>>>>>> Stashed changes
-=======
-
-  // Component for each SEO category
-  interface CategoryCardProps {
->>>>>>> Stashed changes
-=======
-
-  // Component for each SEO category
-  interface CategoryCardProps {
->>>>>>> Stashed changes
     icon: React.ReactNode;
     title: string;
     score: number;
     details: React.ReactNode;
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  }) => (
-    <Card className="shadow-sm dark:bg-gray-800 dark:border-gray-700">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center dark:text-gray-100">
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
   }
   
   const CategoryCard: React.FC<CategoryCardProps> = ({ icon, title, score, details }) => (
@@ -358,13 +255,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             {icon}
             <span className="ml-2">{title}</span>
           </CardTitle>
@@ -373,19 +263,7 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
           </Badge>
         </div>
       </CardHeader>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      <CardContent className="dark:text-gray-300">
-=======
       <CardContent>
->>>>>>> Stashed changes
-=======
-      <CardContent>
->>>>>>> Stashed changes
-=======
-      <CardContent>
->>>>>>> Stashed changes
         {details}
       </CardContent>
     </Card>
@@ -434,9 +312,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
     }
   };
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
   // Export report functionality
   const exportReport = async (format: 'json' | 'html') => {
     if (!results) return;
@@ -622,33 +497,71 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
         
         <h2>Category Scores</h2>
         <div class="category-scores">
-          <div class="category">
-            <div class="category-header">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="dark:text-gray-300">Meta Tags</span>
+                <span className={getScoreColor(data.categories.metaTags.score)}>
+                  {data.categories.metaTags.score}/100
+                </span>
+              </div>
+              <Progress 
+                value={data.categories.metaTags.score} 
+                className="h-2"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="dark:text-gray-300">Content Quality</span>
+                <span className={getScoreColor(data.categories.content.score)}>
+                  {data.categories.content.score}/100
+                </span>
+              </div>
+              <Progress 
+                value={data.categories.content.score} 
+                className="h-2"
+              />
+            </div>
+            
+            <div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="dark:text-gray-300">Performance</span>
+                <span className={getScoreColor(data.categories.performance.score)}>
+                  {data.categories.performance.score}/100
+                </span>
+              </div>
+              <Progress 
+                value={data.categories.performance.score} 
+                className="h-2"
+              />
+            </div>
+          </div>
+          
+          <div className="category">
+            <div className="category-header">
               <span>Meta Tags</span>
-              <span>${data.categories.metaTags.score}/100</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill score-${getScoreRangeClass(data.categories.metaTags.score)}" style="width: ${data.categories.metaTags.score}%"></div>
+            <div className="progress-bar">
+              <div className="progress-fill score-${getScoreRangeClass(data.categories.metaTags.score)}" style="width: ${data.categories.metaTags.score}%"></div>
             </div>
           </div>
           
-          <div class="category">
-            <div class="category-header">
+          <div className="category">
+            <div className="category-header">
               <span>Content Quality</span>
-              <span>${data.categories.content.score}/100</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill score-${getScoreRangeClass(data.categories.content.score)}" style="width: ${data.categories.content.score}%"></div>
+            <div className="progress-bar">
+              <div className="progress-fill score-${getScoreRangeClass(data.categories.content.score)}" style="width: ${data.categories.content.score}%"></div>
             </div>
           </div>
           
-          <div class="category">
-            <div class="category-header">
+          <div className="category">
+            <div className="category-header">
               <span>Performance</span>
-              <span>${data.categories.performance.score}/100</span>
             </div>
-            <div class="progress-bar">
-              <div class="progress-fill score-${getScoreRangeClass(data.categories.performance.score)}" style="width: ${data.categories.performance.score}%"></div>
+            <div className="progress-bar">
+              <div className="progress-fill score-${getScoreRangeClass(data.categories.performance.score)}" style="width: ${data.categories.performance.score}%"></div>
             </div>
           </div>
         </div>
@@ -715,24 +628,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
       
       {/* URL Input */}
       <Card className="shadow-sm dark:bg-gray-800 dark:border-gray-700">
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-  return (
-    <div className="w-full max-w-4xl mx-auto p-4 bg-gray-50 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold text-center mb-6">Website SEO Analyzer</h2>
-      
-      {/* URL Input */}
-      <Card className="shadow-sm">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4 items-stretch">
             <div className="flex-1">
@@ -742,9 +637,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                   type="text"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                   placeholder="Enter website URL (e.g., example.com)"
                   className="pl-9 pr-4 py-6 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400"
                   onKeyDown={(e) => e.key === 'Enter' && handleAnalyze()}
@@ -785,57 +677,11 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                 </Button>
               )}
             </div>
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                  placeholder="Enter website URL (e.g., https://example.com)"
-                  className="pl-9 pr-4 py-6"
-                />
-              </div>
-            </div>
-            <Button 
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="md:w-auto w-full py-6"
-            >
-              {isAnalyzing ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Search className="mr-2 h-4 w-4" />
-                  Analyze SEO
-                </>
-              )}
-            </Button>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
           </div>
           
           {/* Error Message */}
           {error && (
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
             <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg flex items-start">
-=======
-            <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-start">
->>>>>>> Stashed changes
-=======
-            <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-start">
->>>>>>> Stashed changes
-=======
-            <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg flex items-start">
->>>>>>> Stashed changes
               <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
               <p>{error}</p>
             </div>
@@ -843,9 +689,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
         </CardContent>
       </Card>
       
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
       {/* Analysis History Modal */}
       {isHistoryOpen && (
         <div className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4">
@@ -906,23 +749,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
         <div className="space-y-6 mt-6">
           {/* Overall Score */}
           <Card className="shadow-sm dark:bg-gray-800 dark:border-gray-700">
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-      {/* Results */}
-      {results && (
-        <div className="space-y-6">
-          {/* Overall Score */}
-          <Card className="shadow-sm">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row items-center gap-6">
                 <div className="flex-shrink-0">
@@ -931,19 +757,7 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                       <div className={`text-5xl font-bold ${getScoreColor(results.overallScore)}`}>
                         {results.overallScore}
                       </div>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                       <div className="text-lg text-gray-500 dark:text-gray-400">/100</div>
-=======
-                      <div className="text-lg text-gray-500">/100</div>
->>>>>>> Stashed changes
-=======
-                      <div className="text-lg text-gray-500">/100</div>
->>>>>>> Stashed changes
-=======
-                      <div className="text-lg text-gray-500">/100</div>
->>>>>>> Stashed changes
                     </div>
                     {/* This would be a circular progress indicator in a real implementation */}
                     <div className={`absolute inset-0 rounded-full border-8 ${getScoreColor(results.overallScore)} opacity-60`}></div>
@@ -951,9 +765,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                 </div>
                 
                 <div className="flex-1 space-y-4">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                   <div className="flex justify-between items-start">
                     <div>
                       <h2 className="text-xl font-bold mb-2 dark:text-gray-100">Overall SEO Score</h2>
@@ -1004,26 +815,13 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                           </div>
                         </div>
                       )}
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                  <div>
-                    <h2 className="text-xl font-bold mb-2">Overall SEO Score</h2>
-                    <p className="text-muted-foreground">
-                      {results.overallScore >= 80 ? 
-                        'Great job! Your website has strong SEO practices in place.' : 
-                        results.overallScore >= 60 ? 
-                        'Your website has decent SEO but there are several areas for improvement.' : 
-                        'Your website needs significant SEO improvements to rank well in search results.'}
-                    </p>
+                    </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Meta Tags</span>
+                        <span className="dark:text-gray-300">Meta Tags</span>
                         <span className={getScoreColor(results.categories.metaTags.score)}>
                           {results.categories.metaTags.score}/100
                         </span>
@@ -1036,7 +834,7 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                     
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Content Quality</span>
+                        <span className="dark:text-gray-300">Content Quality</span>
                         <span className={getScoreColor(results.categories.content.score)}>
                           {results.categories.content.score}/100
                         </span>
@@ -1049,7 +847,7 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                     
                     <div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span>Performance</span>
+                        <span className="dark:text-gray-300">Performance</span>
                         <span className={getScoreColor(results.categories.performance.score)}>
                           {results.categories.performance.score}/100
                         </span>
@@ -1058,13 +856,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                         value={results.categories.performance.score} 
                         className="h-2"
                       />
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     </div>
                   </div>
                 </div>
@@ -1079,9 +870,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
               title="Meta Tags" 
               score={results.categories.metaTags.score}
               details={
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 <ul className="list-disc list-inside dark:text-gray-300">
                   <li className={results.categories.metaTags.title.optimal ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
                     Title: {results.categories.metaTags.title.length} characters 
@@ -1091,27 +879,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                     Description: {results.categories.metaTags.description.length} characters
                   </li>
                   <li className={results.categories.metaTags.keywords.exists ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                <ul className="list-disc list-inside">
-                  <li className={results.categories.metaTags.title.optimal ? "text-green-600" : "text-yellow-600"}>
-                    Title: {results.categories.metaTags.title.length} characters 
-                    {!results.categories.metaTags.title.optimal && " (not optimal)"}
-                  </li>
-                  <li className={results.categories.metaTags.description.optimal ? "text-green-600" : "text-yellow-600"}>
-                    Description: {results.categories.metaTags.description.length} characters
-                  </li>
-                  <li className={results.categories.metaTags.keywords.exists ? "text-green-600" : "text-red-600"}>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     Keywords: {results.categories.metaTags.keywords.exists ? "Present" : "Missing"}
                   </li>
                 </ul>
@@ -1123,9 +890,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
               title="Headings Structure" 
               score={results.categories.headings.score}
               details={
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 <ul className="list-disc list-inside dark:text-gray-300">
                   <li className={results.categories.headings.h1.optimal ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
                     H1: {results.categories.headings.h1.count} {results.categories.headings.h1.count !== 1 && "(should be exactly 1)"}
@@ -1134,26 +898,6 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
                     H2: {results.categories.headings.h2.count}
                   </li>
                   <li className="text-green-600 dark:text-green-400">
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                <ul className="list-disc list-inside">
-                  <li className={results.categories.headings.h1.optimal ? "text-green-600" : "text-red-600"}>
-                    H1: {results.categories.headings.h1.count} {results.categories.headings.h1.count !== 1 && "(should be exactly 1)"}
-                  </li>
-                  <li className="text-green-600">
-                    H2: {results.categories.headings.h2.count}
-                  </li>
-                  <li className="text-green-600">
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                     H3+: {results.categories.headings.h3.count}
                   </li>
                 </ul>
@@ -1165,19 +909,7 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
               title="Content Quality" 
               score={results.categories.content.score}
               details={
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 <ul className="list-disc list-inside dark:text-gray-300">
-=======
-                <ul className="list-disc list-inside">
->>>>>>> Stashed changes
-=======
-                <ul className="list-disc list-inside">
->>>>>>> Stashed changes
-=======
-                <ul className="list-disc list-inside">
->>>>>>> Stashed changes
                   <li>Word count: {results.categories.content.wordCount}</li>
                   <li>Readability: {results.categories.content.readabilityScore}</li>
                   <li>Keyword density: {results.categories.content.keywordDensity}</li>
@@ -1190,89 +922,22 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
               title="Images" 
               score={results.categories.images.score}
               details={
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
                 <ul className="list-disc list-inside dark:text-gray-300">
-                  <li>Total images: {results.categories.images.total}</li>
-                  <li className="text-green-600 dark:text-green-400">With alt text: {results.categories.images.withAlt}</li>
-                  <li className="text-red-600 dark:text-red-400">Without alt text: {results.categories.images.withoutAlt}</li>
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-                <ul className="list-disc list-inside">
                   <li className="text-green-600">{results.categories.images.withAlt} images with alt text</li>
                   <li className="text-red-600">{results.categories.images.withoutAlt} images missing alt text</li>
                   <li className="text-yellow-600">{results.categories.images.largeImages} large images need optimization</li>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 </ul>
               }
             />
             
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            {/* Recommendations */}
-            <Card className="shadow-sm md:col-span-2 dark:bg-gray-800 dark:border-gray-700">
-              <CardHeader>
-                <CardTitle className="flex items-center dark:text-gray-100">
-                  <CheckCircle className="h-5 w-5 mr-2 text-green-500" />
-                  Recommendations for Improvement
-                </CardTitle>
-                <CardDescription className="dark:text-gray-400">
-                  Actionable tips to improve your SEO performance
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid gap-2">
-                    {results.recommendations.map((recommendation, index) => (
-                      <div 
-                        key={index} 
-                        className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-start"
-                      >
-                        <ArrowRight className="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <p className="text-sm dark:text-gray-200">{recommendation}</p>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="flex justify-between pt-2">
-                    <Button variant="outline" onClick={copyRecommendations} className="dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
-                      <Copy className="h-4 w-4 mr-2" />
-                      {isCopying ? 'Copied!' : 'Copy All Recommendations'}
-                    </Button>
-                    
-                    <Button onClick={generateDetailedPlan} disabled={isGeneratingPlan}>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      {isGeneratingPlan ? 'Generating...' : 'Generate Detailed Action Plan'}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-=======
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
             <CategoryCard 
               icon={<Clock className="h-5 w-5 text-blue-500" />}
               title="Performance" 
               score={results.categories.performance.score}
               details={
-                <ul className="list-disc list-inside">
+                <ul className="list-disc list-inside dark:text-gray-300">
                   <li>Load time: {results.categories.performance.loadTime}</li>
-                  <li className={results.categories.performance.mobileOptimized ? "text-green-600" : "text-red-600"}>
+                  <li className={results.categories.performance.mobileOptimized ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
                     Mobile optimized: {results.categories.performance.mobileOptimized ? "Yes" : "No"}
                   </li>
                   {results.categories.performance.issues.map((issue, i) => (
@@ -1287,10 +952,10 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
               title="Links" 
               score={results.categories.links.score}
               details={
-                <ul className="list-disc list-inside">
+                <ul className="list-disc list-inside dark:text-gray-300">
                   <li>Internal links: {results.categories.links.internal}</li>
                   <li>External links: {results.categories.links.external}</li>
-                  <li className={results.categories.links.broken === 0 ? "text-green-600" : "text-red-600"}>
+                  <li className={results.categories.links.broken === 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
                     Broken links: {results.categories.links.broken}
                   </li>
                 </ul>
@@ -1337,35 +1002,10 @@ const [isCopying, setIsCopying] = useState<boolean>(false);
               </div>
             </CardContent>
           </Card>
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
         </div>
       )}
     </div>
   );
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 }
 
-export default SEOAnalyzer; 
-=======
-};
-
 export default SEOAnalyzer;
->>>>>>> Stashed changes
-=======
-};
-
-export default SEOAnalyzer;
->>>>>>> Stashed changes
-=======
-};
-
-export default SEOAnalyzer;
->>>>>>> Stashed changes

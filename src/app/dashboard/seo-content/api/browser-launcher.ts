@@ -1,5 +1,15 @@
 import puppeteerCore from 'puppeteer-core';
 import type { Browser, Page } from 'puppeteer-core';
+import * as fs from 'fs';
+
+// Define a minimal type for chrome-aws-lambda to satisfy TypeScript
+type ChromiumType = {
+  default: {
+    args: string[];
+    executablePath: string | Promise<string>;
+    headless: boolean;
+  }
+};
 
 /**
  * Helper to launch a browser instance that works in both development and serverless environments
@@ -49,14 +59,45 @@ export async function launchBrowser(): Promise<Browser> {
     // Serverless environment - use Vercel's Chrome
     // Note: This requires Puppeteer core 9.x.x to work with chrome-aws-lambda
     try {
-      // Dynamic import to avoid bundling issues
-      const chromium = await import('chrome-aws-lambda');
+      // First try local Chrome if available
+      const possiblePaths = process.platform === 'win32'
+        ? [
+            'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+            'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+            process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe'
+          ]
+        : process.platform === 'darwin'
+          ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+          : ['/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium'];
       
-      return await puppeteerCore.launch({
-        args: chromium.default.args,
-        executablePath: await chromium.default.executablePath,
-        headless: chromium.default.headless,
-      });
+      for (const path of possiblePaths) {
+        try {
+          if (require('fs').existsSync(path)) {
+            console.log('Using local Chrome:', path);
+            return await puppeteerCore.launch({
+              headless: true,
+              executablePath: path,
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+          }
+        } catch (e) {}
+      }
+      
+      // If local Chrome not found, try to use chrome-aws-lambda as fallback
+      try {
+        // Use dynamic import with type assertion to bypass TypeScript errors
+        // @ts-ignore - Ignore the module not found error
+        const chromium = await import('chrome-aws-lambda') as any;
+        
+        return await puppeteerCore.launch({
+          args: chromium.default.args,
+          executablePath: await chromium.default.executablePath,
+          headless: chromium.default.headless,
+        });
+      } catch (importError) {
+        console.error('Failed to import chrome-aws-lambda:', importError);
+        throw new Error('Could not find Chrome or chrome-aws-lambda. Please install Chrome or run npm install chrome-aws-lambda.');
+      }
     } catch (error) {
       console.error('Failed to launch browser in serverless mode:', error);
       throw error;
