@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import SEOAnalyzer from "./components/SEOAnalyzer";
 import {
   Card,
   CardContent,
@@ -38,6 +40,12 @@ import {
   MessageSquare,
   Lightbulb,
   AlertTriangle,
+
+  AlertCircle,
+  Lock,
+  ArrowRight,
+  Shield,
+
   List,
   PlusCircle,
   Star,
@@ -49,6 +57,7 @@ import {
   Info,
   Eye,
   Upload,
+  Layout,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,6 +70,85 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+// Interface for SEO Result
+interface SEOResult {
+  overallScore: number;
+  categories: {
+    metaTags: {
+      score: number;
+      title: {
+        exists: boolean;
+        length: number;
+        optimal: boolean;
+        value: string;
+      };
+      description: {
+        exists: boolean;
+        length: number;
+        optimal: boolean;
+        value: string;
+      };
+      keywords: {
+        exists: boolean;
+      };
+    };
+    headings: {
+      score: number;
+      h1: {
+        count: number;
+        optimal: boolean;
+        values: string[];
+      };
+      h2: {
+        count: number;
+        optimal: boolean;
+        values: string[];
+      };
+      h3: {
+        count: number;
+        optimal: boolean;
+      };
+      structure: string;
+    };
+    content: {
+      score: number;
+      wordCount: number;
+      paragraphs: number;
+      readabilityScore: string;
+      keywordDensity: string;
+      issuesFound: string[];
+    };
+    images: {
+      score: number;
+      total: number;
+      withAlt: number;
+      withoutAlt: number;
+      largeImages: number;
+    };
+    performance: {
+      score: number;
+      loadTime: string;
+      mobileOptimized: boolean;
+      issues: string[];
+    };
+    links: {
+      score: number;
+      internal: number;
+      external: number;
+      broken: number;
+    };
+    security: {
+      score: number;
+      https: boolean;
+      issues: string[];
+    };
+  };
+  recommendations: string[];
+  analyzedUrl?: string;
+  timestamp?: string;
+  analysisDepth?: string;
+}
 
 // Mock data for keyword analysis
 const keywordsData = [
@@ -250,9 +338,103 @@ const contentPerformance = [
     ]
   },
 ];
+
 export default function SeoContentPage() {
     const [activeTab, setActiveTab] = useState("keyword-research");
     const [currentContentType, setCurrentContentType] = useState("all");
+
+    const [url, setUrl] = useState<string>('');
+    const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+    const [results, setResults] = useState<SEOResult | null>(null);
+    const [error, setError] = useState<string>('');
+    const [analysisHistory, setAnalysisHistory] = useState<Array<{url: string, date: string}>>([]);
+
+    const analyzeSEO = async (targetUrl: string): Promise<SEOResult> => {
+      // Basic URL validation
+      if (!targetUrl || !targetUrl.match(/^(http|https):\/\/[a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}(\/.*)?$/)) {
+        setError('Please enter a valid URL (e.g., https://example.com)');
+        throw new Error('Invalid URL');
+      }
+      
+      setError('');
+      setIsAnalyzing(true);
+      
+      try {
+        // Show loading state for at least 1 second to avoid UI flashing
+        const startTime = Date.now();
+        
+        // Make API call
+        const response = await axios.post('/api/analyze-seo', { 
+          url: targetUrl,
+          depth: 'standard' // Can be 'basic', 'standard', or 'deep'
+        });
+        
+        // Ensure loading shows for at least 1 second
+        const analysisTime = Date.now() - startTime;
+        if (analysisTime < 1000) {
+          await new Promise(resolve => setTimeout(resolve, 1000 - analysisTime));
+        }
+        
+        // Process and set results
+        const result = response.data;
+        setResults(result);
+        
+        // Add to history (could be stored in localStorage or database)
+        const historyItem = { url: targetUrl, date: new Date().toISOString() };
+        setAnalysisHistory(prev => [historyItem, ...prev.slice(0, 9)]);
+        localStorage.setItem('seoAnalysisHistory', JSON.stringify([historyItem, ...analysisHistory.slice(0, 9)]));
+        
+        return result;
+      } catch (err) {
+        // Handle API errors
+        if (axios.isAxiosError(err)) {
+          if (err.response?.status === 429) {
+            setError('Too many requests. Please try again in a few minutes.');
+          } else if (err.response?.data?.error) {
+            setError(err.response.data.error);
+          } else if (err.code === 'ECONNABORTED') {
+            setError('Analysis took too long. Try analyzing a smaller site or contact support.');
+          } else if (err.message === 'Network Error') {
+            setError('Network error. Please check your connection and ensure the server is running. If this is a development environment, make sure your Next.js server is running correctly.');
+            console.error('Network Error Details:', err);
+          } else {
+            setError(`Failed to analyze the website. Error: ${err.message || 'Unknown error'}`);
+          }
+        } else {
+          setError(`An unexpected error occurred: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+        console.error('Error analyzing website:', err);
+        throw err;
+      } finally {
+        setIsAnalyzing(false);
+      }
+    };
+    
+    // Load history from localStorage on component mount
+    useEffect(() => {
+      const savedHistory = localStorage.getItem('seoAnalysisHistory');
+      if (savedHistory) {
+        try {
+          setAnalysisHistory(JSON.parse(savedHistory));
+        } catch (e) {
+          console.error('Failed to parse analysis history');
+        }
+      }
+    }, []);
+    
+    // Helper to render score color
+    const getScoreColor = (score: number): string => {
+      if (score >= 80) return 'text-green-500';
+      if (score >= 60) return 'text-yellow-500';
+      return 'text-red-500';
+    };
+  
+    // Helper for progress bar color class
+    const getProgressColorClass = (score: number): string => {
+      if (score >= 80) return 'bg-green-500';
+      if (score >= 60) return 'bg-yellow-500';
+      return 'bg-red-500';
+    };
   
     return (
       <div className="space-y-6">
@@ -264,11 +446,12 @@ export default function SeoContentPage() {
         </div>
   
         <Tabs defaultValue="keyword-research" onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="keyword-research">Keyword Research</TabsTrigger>
             <TabsTrigger value="content-ideas">Content Ideas</TabsTrigger>
             <TabsTrigger value="content-optimizer">Content Optimizer</TabsTrigger>
             <TabsTrigger value="content-performance">Performance</TabsTrigger>
+            <TabsTrigger value="seo-analyzer">SEO Analyzer</TabsTrigger>
           </TabsList>
           
           {/* Keyword Research Tab */}
@@ -452,12 +635,6 @@ export default function SeoContentPage() {
                         <Progress 
                             value={keyword.difficulty} 
                             className="h-1.5 w-full" 
-                            // Remove the indicatorClassName property and use something like this:
-                            // style={{
-                            //   '--progress-foreground': keyword.difficulty >= 70 ? 'rgb(239, 68, 68)' : 
-                            //                            keyword.difficulty >= 40 ? 'rgb(234, 179, 8)' : 
-                            //                            'rgb(34, 197, 94)'
-                            // }}
                             />
                       </div>
                     </div>
@@ -1562,6 +1739,43 @@ First-click attribution gives 100% credit to the first touchpoint a customer int
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* SEO Analyzer Tab */}
+        <TabsContent value="seo-analyzer" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
+            <div>
+              <h2 className="text-lg font-bold">Website SEO Analyzer</h2>
+              <p className="text-sm text-muted-foreground">
+                Analyze any website's SEO performance and get actionable recommendations
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline">
+                <Clock className="h-4 w-4 mr-2" />
+                Analysis History
+              </Button>
+              
+              <Button>
+                <Download className="h-4 w-4 mr-2" />
+                Export Report
+              </Button>
+            </div>
+          </div>
+          
+          {/* SEO Analyzer Component */}
+          <SEOAnalyzer
+            initialUrl={url}
+            onUrlChange={setUrl}
+            analyzeSEO={analyzeSEO}
+            isAnalyzing={isAnalyzing}
+            setIsAnalyzing={setIsAnalyzing}
+            results={results}
+            setResults={setResults}
+            error={error}
+            setError={setError}
+          />
         </TabsContent>
       </Tabs>
     </div>
