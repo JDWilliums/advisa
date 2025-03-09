@@ -240,11 +240,11 @@ export async function analyzeSEO(url: string, depth: AnalysisDepth = 'standard')
       size: number | string;
     }> = [];
     
-    page.on('request', request => {
+    page.on('request', (request: puppeteer.HTTPRequest) => {
       request.continue();
     });
     
-    page.on('response', response => {
+    page.on('response', (response: puppeteer.HTTPResponse) => {
       const request = response.request();
       const resourceType = request.resourceType();
       
