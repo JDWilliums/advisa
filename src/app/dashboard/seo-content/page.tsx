@@ -40,10 +40,12 @@ import {
   MessageSquare,
   Lightbulb,
   AlertTriangle,
+
   AlertCircle,
   Lock,
   ArrowRight,
   Shield,
+
   List,
   PlusCircle,
   Star,
@@ -1651,7 +1653,7 @@ First-click attribution gives 100% credit to the first touchpoint a customer int
                 Content Gap Analysis
               </CardTitle>
               <CardDescription>
-                Topics and keywords that competitors rank for but you don&apos;t
+                Topics and keywords that competitors rank for but you don't
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -1662,7 +1664,7 @@ First-click attribution gives 100% credit to the first touchpoint a customer int
                     Content Opportunity
                   </h4>
                   <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
-                    Competitors have 45 pieces of content ranking on page 1 for keywords where you&apos;re not ranking at all. These represent your biggest content gap opportunities.
+                    Competitors have 45 pieces of content ranking on page 1 for keywords where you're not ranking at all. These represent your biggest content gap opportunities.
                   </p>
                 </div>
                 

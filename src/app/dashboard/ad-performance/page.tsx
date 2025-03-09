@@ -22,11 +22,16 @@ import {
   Filter,
   BarChart2,
   DollarSign,
+  MousePointer,
   Users,
   Eye,
   ThumbsUp,
+  ArrowUp,
+  ArrowDown,
   ArrowUpRight,
   ArrowDownRight,
+  ChevronUp,
+  ChevronDown,
   RefreshCw,
   AlertCircle,
   Search,
@@ -34,17 +39,21 @@ import {
   Target,
   Info,
   Lightbulb,
+  PieChart,
   Activity,
   FileText,
   PlusCircle,
   Sparkles,
   Check,
+  Upload,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -585,7 +594,7 @@ export default function AdPerformancePage() {
                         Top Performance
                       </h4>
                       <p className="text-xs text-green-700 dark:text-green-400 mt-1">
-                      &ldquo;Summer Product Launch&rdquo; campaign has the highest ROAS (4.2x) and lowest CPA ($23.51) among all campaigns.
+                        "Summer Product Launch" campaign has the highest ROAS (4.2x) and lowest CPA ($23.51) among all campaigns.
                       </p>
                     </div>
                     
@@ -595,7 +604,7 @@ export default function AdPerformancePage() {
                         Performance Alert
                       </h4>
                       <p className="text-xs text-red-700 dark:text-red-400 mt-1">
-                      &ldquo;B2B Lead Generation&rdquo; on LinkedIn has seen a 3% decrease in conversions and 4.3% increase in CPA in the last 14 days.
+                        "B2B Lead Generation" on LinkedIn has seen a 3% decrease in conversions and 4.3% increase in CPA in the last 14 days.
                       </p>
                     </div>
                   </div>
@@ -896,7 +905,7 @@ export default function AdPerformancePage() {
                   <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-md border border-indigo-100 dark:border-indigo-800">
                     <h4 className="text-sm font-medium text-indigo-800 dark:text-indigo-300 mb-2">Creative Insights</h4>
                     <p className="text-sm text-indigo-700 dark:text-indigo-400">
-                      Video ads are performing 32% better than static images in terms of CTR. The &ldquo;Product Demo Video&rdquo; has the highest conversion rate (4.53%), outperforming other creatives by an average of 22%.
+                      Video ads are performing 32% better than static images in terms of CTR. The "Product Demo Video" has the highest conversion rate (4.53%), outperforming other creatives by an average of 22%.
                     </p>
                   </div>
                   
@@ -1111,7 +1120,7 @@ export default function AdPerformancePage() {
                 <div className="space-y-4">
                   <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-md border border-purple-100 dark:border-purple-800">
                     <p className="text-sm text-purple-800 dark:text-purple-300">
-                      Based on your conversion data, we&apos;ve identified new audience segments that match the profile of your highest-converting customers. These lookalike audiences can help expand your reach while maintaining strong performance.
+                      Based on your conversion data, we've identified new audience segments that match the profile of your highest-converting customers. These lookalike audiences can help expand your reach while maintaining strong performance.
                     </p>
                   </div>
                   

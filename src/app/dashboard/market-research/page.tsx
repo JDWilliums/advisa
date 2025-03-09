@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -16,10 +16,13 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import {
+  BarChart2,
   TrendingUp,
   Download,
   ExternalLink,
   Eye,
+  Calendar,
+  Filter,
   List,
   Grid3X3,
   PieChart,
@@ -27,12 +30,21 @@ import {
   X,
   RefreshCw,
   AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { getUserProfile } from "@/lib/userService";
+import { performCompetitorAnalysis, saveCompetitorAnalysis, Competitor, MarketOpportunity, MarketTrend } from "@/lib/marketResearchService";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import MarketSharePieChart from "@/components/MarketSharePieChart";
 
 // Mock data for competitors
 const competitors = [
@@ -149,8 +161,126 @@ const marketOpportunities = [
     competition: "Medium",
   },
 ];
+
 export default function MarketResearchPage() {
     const [competitorView, setCompetitorView] = useState<"grid" | "list">("grid");
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [competitors, setCompetitors] = useState<Competitor[]>([]);
+    const [opportunities, setOpportunities] = useState<MarketOpportunity[]>([]);
+    const [trends, setTrends] = useState<MarketTrend[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [sortBy, setSortBy] = useState<string>("marketshare");
+    const [isAnalysisUpdating, setIsAnalysisUpdating] = useState<boolean>(false);
+    const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
+    const [isRealDataCollection, setIsRealDataCollection] = useState<boolean>(false);
+    
+    const { user } = useAuth();
+    
+    useEffect(() => {
+      const fetchMarketResearch = async () => {
+        if (!user) return;
+        
+        try {
+          setLoading(true);
+          setError(null);
+          
+          // Get user profile
+          const userProfile = await getUserProfile(user.uid);
+          
+          if (!userProfile) {
+            setError("User profile not found. Please complete your profile first.");
+            setLoading(false);
+            return;
+          }
+          
+          // Perform competitor analysis
+          const analysis = await performCompetitorAnalysis(userProfile);
+          
+          setCompetitors(analysis.competitors);
+          setOpportunities(analysis.opportunities);
+          setTrends(analysis.trends);
+        } catch (error) {
+          console.error("Error fetching market research:", error);
+          setError("Failed to load market research data. Please try again later.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchMarketResearch();
+    }, [user]);
+    
+    const handleUpdateAnalysis = async () => {
+      if (!user) return;
+      
+      try {
+        setIsAnalysisUpdating(true);
+        setError(null);
+        
+        // Get user profile
+        const userProfile = await getUserProfile(user.uid);
+        
+        if (!userProfile) {
+          setError("User profile not found. Please complete your profile first.");
+          return;
+        }
+        
+        // Perform competitor analysis
+        const analysis = await performCompetitorAnalysis(userProfile);
+        
+        setCompetitors(analysis.competitors);
+        setOpportunities(analysis.opportunities);
+        setTrends(analysis.trends);
+        
+        // Show success message
+        setError(null);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } catch (error) {
+        console.error("Error updating market research:", error);
+        setError("Failed to update market research data. Please try again later.");
+      } finally {
+        setIsAnalysisUpdating(false);
+      }
+    };
+    
+    const handleSaveAnalysis = async () => {
+      if (!user) return;
+      
+      try {
+        await saveCompetitorAnalysis(user.uid, {
+          competitors,
+          opportunities,
+          trends
+        });
+        
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } catch (error) {
+        console.error("Error saving analysis:", error);
+        setError("Failed to save analysis. Please try again later.");
+      }
+    };
+    
+    // Filter competitors based on search term
+    const filteredCompetitors = competitors.filter(competitor => 
+      competitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      competitor.website.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      competitor.overview.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sort competitors based on sort option
+    const sortedCompetitors = [...filteredCompetitors].sort((a, b) => {
+      if (sortBy === "marketshare") {
+        return b.marketShare - a.marketShare;
+      } else if (sortBy === "growth") {
+        return b.growth - a.growth;
+      } else if (sortBy === "alphabetical") {
+        return a.name.localeCompare(b.name);
+      }
+      return 0;
+    });
   
     return (
       <div className="space-y-6">
@@ -160,6 +290,30 @@ export default function MarketResearchPage() {
             Analyze competitors and identify market trends and opportunities
           </p>
         </div>
+        
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        {saveSuccess && (
+          <Alert variant="default" className="bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-900 dark:text-green-400">
+            <Check className="h-4 w-4" />
+            <AlertTitle>Success</AlertTitle>
+            <AlertDescription>Analysis saved successfully!</AlertDescription>
+          </Alert>
+        )}
+        
+        {isRealDataCollection && (
+          <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-900 dark:text-blue-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <AlertTitle>Collecting Real Data</AlertTitle>
+            <AlertDescription>We're collecting real-time data about your competitors. This may take a moment...</AlertDescription>
+          </Alert>
+        )}
   
         <Tabs defaultValue="competitors">
           <TabsList className="grid w-full grid-cols-3">
@@ -170,557 +324,397 @@ export default function MarketResearchPage() {
           
           {/* Competitors Tab */}
           <TabsContent value="competitors" className="space-y-4">
-            {/* Controls */}
-            <div className="flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
-              <div className="flex flex-col md:flex-row gap-4 md:items-center">
-                <div className="relative w-full md:w-64">
-                  <Input placeholder="Search competitors..." />
-                </div>
-                
-                <Select defaultValue="marketshare">
-                  <SelectTrigger className="w-full md:w-[160px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="marketshare">Market Share</SelectItem>
-                    <SelectItem value="growth">Growth</SelectItem>
-                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                  </SelectContent>
-                </Select>
+            {loading ? (
+              <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-center">Loading competitor analysis...</span>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  We're analyzing your industry and finding relevant competitors based on your business profile.
+                </p>
               </div>
-              
-              <div className="flex gap-2 justify-end">
-                <Button 
-                  variant={competitorView === "grid" ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setCompetitorView("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4 mr-2" />
-                  Grid
-                </Button>
-                <Button 
-                  variant={competitorView === "list" ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => setCompetitorView("list")}
-                >
-                  <List className="h-4 w-4 mr-2" />
-                  List
-                </Button>
-                
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-                
-                <Button size="sm">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Update Analysis
-                </Button>
-              </div>
-            </div>
-            
-            {/* Market Share Overview */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Market Share Distribution</CardTitle>
-                <CardDescription>
-                  Competitive landscape in your industry
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 relative flex items-center">
-                  {/* This would be a pie chart in a real implementation */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <PieChart className="h-40 w-40 text-muted-foreground" />
+            ) : (
+              <>
+                {/* Controls */}
+                <div className="flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
+                  <div className="flex flex-col md:flex-row gap-4 md:items-center">
+                    <div className="relative w-full md:w-64">
+                      <Input 
+                        placeholder="Search competitors..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    
+                    <Select 
+                      defaultValue="marketshare"
+                      value={sortBy}
+                      onValueChange={(value) => setSortBy(value)}
+                    >
+                      <SelectTrigger className="w-full md:w-[160px]">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="marketshare">Market Share</SelectItem>
+                        <SelectItem value="growth">Growth</SelectItem>
+                        <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
-                  {/* Legend */}
-                  <div className="absolute right-0 top-0 space-y-2">
-                    {competitors.map((competitor) => (
-                      <div key={competitor.id} className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${competitor.color}`}></div>
-                        <span className="text-sm">{competitor.name} ({competitor.marketShare}%)</span>
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                      <span className="text-sm">Others (17%)</span>
-                    </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button 
+                      variant={competitorView === "grid" ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setCompetitorView("grid")}
+                    >
+                      <Grid3X3 className="h-4 w-4 mr-2" />
+                      Grid
+                    </Button>
+                    <Button 
+                      variant={competitorView === "list" ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => setCompetitorView("list")}
+                    >
+                      <List className="h-4 w-4 mr-2" />
+                      List
+                    </Button>
+                    
+                    <Button variant="outline" size="sm" onClick={handleSaveAnalysis}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    
+                    <Button 
+                      size="sm" 
+                      onClick={handleUpdateAnalysis}
+                      disabled={isAnalysisUpdating}
+                    >
+                      {isAnalysisUpdating ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      Update Analysis
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-            {/* Competitors List/Grid */}
-          {competitorView === "grid" ? (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
-              {competitors.map((competitor) => (
-                <Card key={competitor.id} className="shadow-sm">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full ${competitor.color} flex items-center justify-center text-white font-bold`}>
-                          {competitor.logo}
-                        </div>
-                        <div>
-                          <CardTitle>{competitor.name}</CardTitle>
-                          <CardDescription className="flex items-center">
-                            <a href={`https://${competitor.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline">
-                              {competitor.website}
-                              <ExternalLink className="h-3 w-3 ml-1" />
-                            </a>
-                          </CardDescription>
-                        </div>
-                      </div>
-                      <div>
-                        <Badge className={competitor.growth >= 0 ? "bg-green-500" : "bg-red-500"}>
-                          {competitor.growth >= 0 ? "+" : ""}{competitor.growth}% Growth
-                        </Badge>
-                      </div>
-                    </div>
+                
+                {/* Market Share Overview */}
+                <Card className="shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Market Share Distribution</CardTitle>
+                    <CardDescription>
+                      Competitive landscape in your industry
+                    </CardDescription>
                   </CardHeader>
-                  <CardContent className="pb-2">
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-sm font-medium mb-1">Market Share</p>
-                        <div className="flex items-center gap-2">
-                          <Progress value={competitor.marketShare} className="h-2 flex-1" />
-                          <span className="text-sm font-medium">{competitor.marketShare}%</span>
-                        </div>
+                  <CardContent>
+                    <div className="h-64 relative flex items-center">
+                      {/* Replace the placeholder with the actual pie chart */}
+                      <div className="w-full">
+                        <MarketSharePieChart competitors={sortedCompetitors} />
                       </div>
                       
-                      <div>
-                        <p className="text-sm font-medium mb-1">Overview</p>
-                        <p className="text-sm text-muted-foreground">{competitor.overview}</p>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium mb-1 text-green-600">Strengths</p>
-                          <ul className="space-y-1">
-                            {competitor.strengths.map((strength, i) => (
-                              <li key={i} className="text-sm flex items-start gap-1">
-                                <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                                <span>{strength}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <p className="text-sm font-medium mb-1 text-red-600">Weaknesses</p>
-                          <ul className="space-y-1">
-                            {competitor.weaknesses.map((weakness, i) => (
-                              <li key={i} className="text-sm flex items-start gap-1">
-                                <X className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
-                                <span>{weakness}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
+                      {/* Legend */}
+                      <div className="absolute right-0 top-0 space-y-2">
+                        {sortedCompetitors.map((competitor) => (
+                          <div key={competitor.id} className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${competitor.color}`}></div>
+                            <span className="text-sm">{competitor.name} ({competitor.marketShare}%)</span>
+                          </div>
+                        ))}
+                        {/* Add "Others" to the legend if total market share < 100% */}
+                        {sortedCompetitors.reduce((sum, comp) => sum + comp.marketShare, 0) < 100 && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                            <span className="text-sm">Others ({100 - sortedCompetitors.reduce((sum, comp) => sum + comp.marketShare, 0)}%)</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Detailed Report
-                    </Button>
-                  </CardFooter>
                 </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle>Competitor List</CardTitle>
-                <CardDescription>
-                  Detailed comparison of key competitors
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="border-b border-gray-200 dark:border-gray-700">
-                  <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-800 text-sm font-medium">
-                    <div className="col-span-3">Company</div>
-                    <div className="col-span-2">Market Share</div>
-                    <div className="col-span-2">Growth</div>
-                    <div className="col-span-2">Strengths</div>
-                    <div className="col-span-2">Weaknesses</div>
-                    <div className="col-span-1">Actions</div>
+                
+                {/* Competitor Grid/List View */}
+                {sortedCompetitors.length === 0 ? (
+                  <Card className="shadow-sm">
+                    <CardContent className="flex flex-col items-center justify-center h-64">
+                      <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground">No competitors found matching your search criteria.</p>
+                    </CardContent>
+                  </Card>
+                ) : competitorView === "grid" ? (
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+                    {sortedCompetitors.map((competitor) => (
+                      <Card key={competitor.id} className="shadow-sm">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-full ${competitor.color} flex items-center justify-center text-white font-bold`}>
+                                {competitor.logo}
+                              </div>
+                              <div>
+                                <CardTitle>{competitor.name}</CardTitle>
+                                <CardDescription className="flex items-center">
+                                  <a href={`https://${competitor.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline">
+                                    {competitor.website}
+                                    <ExternalLink className="h-3 w-3 ml-1" />
+                                  </a>
+                                </CardDescription>
+                              </div>
+                            </div>
+                            <div>
+                              <Badge className={competitor.growth >= 0 ? "bg-green-500" : "bg-red-500"}>
+                                {competitor.growth >= 0 ? "+" : ""}{competitor.growth}% Growth
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-sm font-medium mb-1">Market Share</p>
+                              <div className="flex items-center gap-2">
+                                <Progress value={competitor.marketShare} className="h-2 flex-1" />
+                                <span className="text-sm font-medium">{competitor.marketShare}%</span>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <p className="text-sm font-medium mb-1">Overview</p>
+                              <p className="text-sm text-muted-foreground">{competitor.overview}</p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-sm font-medium mb-1 text-green-600">Strengths</p>
+                                <ul className="space-y-1">
+                                  {competitor.strengths.map((strength, i) => (
+                                    <li key={i} className="text-sm flex items-start gap-1">
+                                      <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                                      <span>{strength}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              
+                              <div>
+                                <p className="text-sm font-medium mb-1 text-red-600">Weaknesses</p>
+                                <ul className="space-y-1">
+                                  {competitor.weaknesses.map((weakness, i) => (
+                                    <li key={i} className="text-sm flex items-start gap-1">
+                                      <X className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                                      <span>{weakness}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button variant="outline" size="sm" className="w-full">
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Detailed Report
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
                   </div>
+                ) : (
+                  <Card className="shadow-sm">
+                    <CardHeader>
+                      <CardTitle>Competitor List</CardTitle>
+                      <CardDescription>
+                        Detailed comparison of key competitors
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="border-b border-gray-200 dark:border-gray-700">
+                        <div className="grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-gray-800 text-sm font-medium">
+                          <div className="col-span-3">Company</div>
+                          <div className="col-span-2">Market Share</div>
+                          <div className="col-span-2">Growth</div>
+                          <div className="col-span-2">Strengths</div>
+                          <div className="col-span-2">Weaknesses</div>
+                          <div className="col-span-1">Actions</div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        {sortedCompetitors.map((competitor) => (
+                          <div key={competitor.id} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-200 dark:border-gray-700 items-center">
+                            <div className="col-span-3 flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-full ${competitor.color} flex items-center justify-center text-white font-bold text-xs`}>
+                                {competitor.logo}
+                              </div>
+                              <div>
+                                <p className="font-medium">{competitor.name}</p>
+                                <a href={`https://${competitor.website}`} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground flex items-center hover:underline">
+                                  {competitor.website}
+                                  <ExternalLink className="h-3 w-3 ml-1" />
+                                </a>
+                              </div>
+                            </div>
+                            <div className="col-span-2">
+                              <div className="flex items-center gap-2">
+                                <Progress value={competitor.marketShare} className="h-2 w-16" />
+                                <span className="text-sm">{competitor.marketShare}%</span>
+                              </div>
+                            </div>
+                            <div className="col-span-2">
+                              <Badge className={competitor.growth >= 0 ? "bg-green-500" : "bg-red-500"}>
+                                {competitor.growth >= 0 ? "+" : ""}{competitor.growth}%
+                              </Badge>
+                            </div>
+                            <div className="col-span-2">
+                              <ul className="space-y-1">
+                                {competitor.strengths.slice(0, 2).map((strength, i) => (
+                                  <li key={i} className="text-xs flex items-start gap-1">
+                                    <Check className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />
+                                    <span>{strength}</span>
+                                  </li>
+                                ))}
+                                {competitor.strengths.length > 2 && (
+                                  <li className="text-xs text-muted-foreground">+{competitor.strengths.length - 2} more</li>
+                                )}
+                              </ul>
+                            </div>
+                            <div className="col-span-2">
+                              <ul className="space-y-1">
+                                {competitor.weaknesses.slice(0, 2).map((weakness, i) => (
+                                  <li key={i} className="text-xs flex items-start gap-1">
+                                    <X className="h-3 w-3 text-red-500 shrink-0 mt-0.5" />
+                                    <span>{weakness}</span>
+                                  </li>
+                                ))}
+                                {competitor.weaknesses.length > 2 && (
+                                  <li className="text-xs text-muted-foreground">+{competitor.weaknesses.length - 2} more</li>
+                                )}
+                              </ul>
+                            </div>
+                            <div className="col-span-1">
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </TabsContent>
+          
+          {/* Market Trends Tab */}
+          <TabsContent value="trends" className="space-y-4">
+            {loading ? (
+              <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-center">Loading market trends...</span>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  We're analyzing industry publications and news sources to identify relevant market trends.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Current Market Trends</h3>
+                  <Button variant="outline" size="sm" onClick={handleSaveAnalysis}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Save Trends
+                  </Button>
                 </div>
                 
-                <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {competitors.map((competitor) => (
-                    <div key={competitor.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center text-sm">
-                      <div className="col-span-3 flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full ${competitor.color} flex items-center justify-center text-white font-bold text-xs`}>
-                          {competitor.logo}
-                        </div>
-                        <div>
-                          <p className="font-medium">{competitor.name}</p>
-                          <p className="text-xs text-muted-foreground">{competitor.website}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-2">
-                        <div className="flex items-center gap-2">
-                          <Progress value={competitor.marketShare} className="h-2 w-20" />
-                          <span>{competitor.marketShare}%</span>
-                        </div>
-                      </div>
-                      
-                      <div className="col-span-2">
-                        <Badge className={competitor.growth >= 0 ? "bg-green-500" : "bg-red-500"}>
-                          {competitor.growth >= 0 ? "+" : ""}{competitor.growth}%
-                        </Badge>
-                      </div>
-                      
-                      <div className="col-span-2">
-                        <ul className="space-y-1">
-                          {competitor.strengths.slice(0, 2).map((strength, i) => (
-                            <li key={i} className="text-xs flex items-start gap-1">
-                              <Check className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />
-                              <span>{strength}</span>
-                            </li>
-                          ))}
-                          {competitor.strengths.length > 2 && (
-                            <li className="text-xs text-muted-foreground">+{competitor.strengths.length - 2} more</li>
-                          )}
-                        </ul>
-                      </div>
-                      
-                      <div className="col-span-2">
-                        <ul className="space-y-1">
-                          {competitor.weaknesses.slice(0, 2).map((weakness, i) => (
-                            <li key={i} className="text-xs flex items-start gap-1">
-                              <X className="h-3 w-3 text-red-500 shrink-0 mt-0.5" />
-                              <span>{weakness}</span>
-                            </li>
-                          ))}
-                          {competitor.weaknesses.length > 2 && (
-                            <li className="text-xs text-muted-foreground">+{competitor.weaknesses.length - 2} more</li>
-                          )}
-                        </ul>
-                      </div>
-                      
-                      <div className="col-span-1">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        {/* Market Trends Tab */}
-        <TabsContent value="trends" className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
-            <div className="flex flex-col md:flex-row gap-4 md:items-center">
-              <Select defaultValue="growth">
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="growth">Highest Growth</SelectItem>
-                  <SelectItem value="relevance">Highest Relevance</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select defaultValue="all">
-                <SelectTrigger className="w-full md:w-[160px]">
-                  <SelectValue placeholder="Relevance" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Relevance</SelectItem>
-                  <SelectItem value="high">High Relevance</SelectItem>
-                  <SelectItem value="medium">Medium Relevance</SelectItem>
-                  <SelectItem value="low">Low Relevance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export Report
-              </Button>
-              
-              <Button size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Update Analysis
-              </Button>
-            </div>
-          </div>
-          
-          {/* Market Trends Overview */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle>Top Market Trends</CardTitle>
-              <CardDescription>
-                Key trends in the marketing analytics industry
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {marketTrends.map((trend) => (
-                  <div key={trend.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium">{trend.trend}</h3>
-                            <Badge variant="outline" className={
-                              trend.relevance === "High" 
-                                ? "border-green-200 text-green-600" 
-                                : trend.relevance === "Medium"
-                                ? "border-yellow-200 text-yellow-600"
-                                : "border-gray-200 text-gray-600"
-                            }>
-                              {trend.relevance} Relevance
-                            </Badge>
-                          </div>
-                          <Badge className="bg-blue-500 md:ml-auto">
-                            {trend.growth}% Growth
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                  {trends.map((trend) => (
+                    <Card key={trend.id} className="shadow-sm">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">{trend.name}</CardTitle>
+                          <Badge variant={
+                            trend.impact === 'High' ? 'default' : 
+                            trend.impact === 'Medium' ? 'outline' : 'secondary'
+                          }>
+                            {trend.impact} Impact
                           </Badge>
                         </div>
+                        <CardDescription>
+                          {trend.timeframe} trend
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
                         <p className="text-sm text-muted-foreground">{trend.description}</p>
-                      </div>
-                      
-                      <div className="flex md:flex-col items-center gap-2">
-                        <Button variant="outline" size="sm" className="w-full">
-                          <Eye className="h-4 w-4 md:mr-2" />
-                          <span className="hidden md:inline">Details</span>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button variant="ghost" size="sm">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          View Trend Data
                         </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between border-t border-gray-200 dark:border-gray-700 py-4">
-              <Button variant="ghost" size="sm">
-                Previous
-              </Button>
-              <Button variant="ghost" size="sm">
-                Next
-              </Button>
-            </CardFooter>
-          </Card>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+          </TabsContent>
           
-          {/* AI Insights */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
-                AI Market Insights
-              </CardTitle>
-              <CardDescription>
-                AI-generated insights based on market trends analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-100 dark:border-blue-800">
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                    Based on current trends, we predict the marketing analytics industry will grow by 18.5% in the next 12 months, with AI-powered solutions seeing the highest adoption rate.
-                  </p>
+          {/* Opportunities Tab */}
+          <TabsContent value="opportunities" className="space-y-4">
+            {loading ? (
+              <div className="flex flex-col justify-center items-center h-64 space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-center">Loading market opportunities...</span>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  We're analyzing market gaps and competitor weaknesses to identify potential opportunities for your business.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Market Opportunities</h3>
+                  <Button variant="outline" size="sm" onClick={handleSaveAnalysis}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Save Opportunities
+                  </Button>
                 </div>
                 
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Strategic Recommendations:</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                      <p className="text-sm">
-                        <span className="font-medium">Accelerate AI features development:</span> Focus on predictive analytics and automated insights to capitalize on the growing AI trend.
-                      </p>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                      <p className="text-sm">
-                        <span className="font-medium">Target privacy-conscious market segment:</span> Develop and market privacy-first analytics features to address growing concerns.
-                      </p>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                      <p className="text-sm">
-                        <span className="font-medium">Consider strategic partnerships:</span> Potential collaborations with real-time data visualization providers could accelerate product development.
-                      </p>
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-muted-foreground">
-                    Last updated: March 2, 2025 • AI confidence level: High
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        {/* Opportunities Tab */}
-        <TabsContent value="opportunities" className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 md:justify-between md:items-center">
-            <div className="flex gap-2">
-              <Select defaultValue="potential">
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="potential">Highest Potential</SelectItem>
-                  <SelectItem value="competition">Lowest Competition</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              
-              <Button size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Generate New Opportunities
-              </Button>
-            </div>
-          </div>
-          
-          {/* Opportunities List */}
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle>Market Opportunities</CardTitle>
-              <CardDescription>
-                AI-identified opportunities based on market gaps and trends
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {marketOpportunities.map((opportunity) => (
-                  <div key={opportunity.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <div className="flex flex-col md:flex-row gap-6">
-                      <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
-                          <h3 className="font-medium">{opportunity.opportunity}</h3>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge className={
-                              opportunity.potential === "Very High" || opportunity.potential === "High"
-                                ? "bg-green-500"
-                                : opportunity.potential === "Medium"
-                                ? "bg-yellow-500"
-                                : "bg-gray-500"
+                <div className="space-y-4">
+                  {opportunities.map((opportunity) => (
+                    <Card key={opportunity.id} className="shadow-sm">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-base">{opportunity.opportunity}</CardTitle>
+                          <div className="flex gap-2">
+                            <Badge variant={
+                              opportunity.potential === 'Very High' || opportunity.potential === 'High' ? 'default' : 
+                              opportunity.potential === 'Medium' ? 'outline' : 'secondary'
                             }>
                               {opportunity.potential} Potential
                             </Badge>
-                            <Badge variant="outline" className={
-                              opportunity.competition === "Low"
-                                ? "border-green-200 text-green-600"
-                                : opportunity.competition === "Medium"
-                                ? "border-yellow-200 text-yellow-600"
-                                : "border-red-200 text-red-600"
-                            }>
+                            <Badge variant="outline">
                               {opportunity.competition} Competition
                             </Badge>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4">{opportunity.description}</p>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-muted-foreground">Estimated Market Size</p>
-                            <p className="text-sm font-medium">$120M - $180M</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-muted-foreground">Development Timeline</p>
-                            <p className="text-sm font-medium">6-8 months</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-muted-foreground">Resource Requirement</p>
-                            <p className="text-sm font-medium">Medium</p>
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-muted-foreground">ROI Potential</p>
-                            <p className="text-sm font-medium">High (3-4x)</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex md:flex-col items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Details
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">{opportunity.description}</p>
+                      </CardContent>
+                      <CardFooter className="flex justify-between">
+                        <Button variant="ghost" size="sm">
+                          <BarChart2 className="h-4 w-4 mr-2" />
+                          View Market Data
                         </Button>
-                        <Button variant="default" size="sm">
-                          Explore Opportunity
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* AI Strategy Recommendations */}
-          <Card className="shadow-sm border-green-200 dark:border-green-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                <AlertCircle className="h-5 w-5" />
-                Strategic Recommendation
-              </CardTitle>
-              <CardDescription>
-                AI-generated strategic recommendation based on opportunity analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-100 dark:border-green-800">
-                <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-2">
-                  Based on our analysis, focusing on &ldquo;AI-driven marketing strategy generation&rdquo; offers the highest potential return with the lowest competition.
-                </p>
-                <p className="text-sm text-green-700 dark:text-green-400">
-                  This aligns with your current strengths in AI technology and addresses a significant gap in the market.
-                </p>
-              </div>
-              
-              <div className="mt-4 space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Implementation Roadmap:</h4>
-                  <ol className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-medium">1</div>
-                      <p className="text-sm flex-1">
-                        <span className="font-medium">Phase 1 (2 months):</span> Develop core AI marketing strategy algorithm and basic UI
-                      </p>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-medium">2</div>
-                      <p className="text-sm flex-1">
-                        <span className="font-medium">Phase 2 (2 months):</span> Beta testing with select customers, integrating feedback
-                      </p>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 text-xs font-medium">3</div>
-                      <p className="text-sm flex-1">
-                        <span className="font-medium">Phase 3 (4 months):</span> Full launch with premium tier, content generation, and analytics integration
-                      </p>
-                    </li>
-                  </ol>
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
-                
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    Create Development Plan
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );}
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+}
