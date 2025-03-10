@@ -29,6 +29,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserProfile, getUserProfile, createUserProfile } from '@/lib/userService';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import BusinessDetailsDisplay from '@/components/BusinessDetailsDisplay';
+import BusinessDetailsEditForm from '@/components/BusinessDetailsEditForm';
+import { Toaster } from 'sonner';
 
 // Type definitions for sample data
 interface Report {
@@ -126,6 +129,7 @@ const ProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [permissionError, setPermissionError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Fetch user profile data directly from Firestore
   useEffect(() => {
@@ -377,74 +381,21 @@ service cloud.firestore {
       case 'overview':
         return (
           <div className="space-y-6">
-            {/* Bio Section */}
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-3">About</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                {profileData?.bio || 'No bio information available. You can add your bio in the profile settings.'}
-              </p>
-            </div>
-            
-            {/* Business Information */}
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Business Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Business Name</p>
-                  <p className="text-foreground">{profileData?.businessName || 'Not specified'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Industry</p>
-                  <p className="text-foreground">{profileData?.industry || 'Not specified'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Business Size</p>
-                  <p className="text-foreground">{profileData?.businessSize || 'Not specified'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Location</p>
-                  <p className="text-foreground">{profileData?.location || 'Not specified'}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Marketing Goals Section */}
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Marketing Goals</h3>
-              {profileData?.goals && profileData.goals.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profileData.goals.map((goal, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-md text-sm"
-                    >
-                      {formatLabel(goal)}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No marketing goals specified.</p>
-              )}
-            </div>
-            
-            {/* Marketing Channels Section */}
-            <div className="bg-card border border-border rounded-lg p-5">
-              <h3 className="text-lg font-semibold text-foreground mb-3">Marketing Channels</h3>
-              {profileData?.marketingChannels && profileData.marketingChannels.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {profileData.marketingChannels.map((channel, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1 bg-primary/20 text-primary dark:bg-primary/30 dark:text-primary-foreground rounded-md text-sm border border-primary/20 dark:border-primary/40"
-                    >
-                      {formatLabel(channel)}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No marketing channels specified.</p>
-              )}
-            </div>
+            {isEditing && profileData ? (
+              <BusinessDetailsEditForm 
+                profile={profileData} 
+                onSave={() => {
+                  setIsEditing(false);
+                  handleRefresh();
+                }}
+                onCancel={() => setIsEditing(false)}
+              />
+            ) : (
+              <BusinessDetailsDisplay 
+                profile={profileData!} 
+                onEdit={() => setIsEditing(true)}
+              />
+            )}
           </div>
         );
       case 'reports':
@@ -510,12 +461,13 @@ service cloud.firestore {
           </div>
         );
       default:
-        return null;
+        return <div>Select a tab to view content</div>;
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Toaster position="top-right" />
       <div className="bg-card border border-border rounded-lg overflow-hidden mb-6">
         {/* Cover Image */}
         <div className="h-48 bg-gradient-to-r from-blue-500 to-purple-600"></div>
@@ -547,7 +499,7 @@ service cloud.firestore {
             </div>
             
             {/* Action Buttons */}
-            <div className="mt-4 md:mt-0 flex space-x-2">
+            <div className="flex gap-2 mt-4 md:mt-0">
               <Button 
                 onClick={handleRefresh} 
                 variant="outline"
@@ -561,6 +513,7 @@ service cloud.firestore {
               <Button 
                 className="gap-2"
                 size="sm"
+                onClick={() => setIsEditing(true)}
               >
                 <Edit2 className="h-4 w-4" />
                 Edit Profile
