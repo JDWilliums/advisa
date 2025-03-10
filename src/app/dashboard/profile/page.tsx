@@ -553,34 +553,6 @@ service cloud.firestore {
                 <span>{profileData.phone}</span>
               </div>
             )}
-            {profileData?.createdAt && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>Joined {profileData.createdAt.toDate ? profileData.createdAt.toDate().toLocaleDateString() : 'Recently'}</span>
-              </div>
-            )}
-          </div>
-          
-          {/* Social Links */}
-          <div className="flex border-t border-border pt-4">
-            <div className="flex space-x-2">
-              <a 
-                href="#" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 text-muted-foreground hover:text-foreground"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a 
-                href="#" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 text-muted-foreground hover:text-foreground"
-              >
-                <Github className="h-5 w-5" />
-              </a>
-            </div>
           </div>
         </div>
       </div>

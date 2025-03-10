@@ -48,38 +48,13 @@ export interface MarketTrend {
 export const findSimilarBusinesses = async (userProfile: UserProfile): Promise<Competitor[]> => {
   try {
     // Extract relevant information from user profile
-    const { industry, businessSize, location } = userProfile;
+    const industry = userProfile.industry || 'General';
     
-    // Create a query to find similar businesses in the same industry
-    const competitorsRef = collection(db, 'competitors');
-    const competitorQuery = query(competitorsRef, where('industry', '==', industry || 'Marketing'));
-    
-    // Execute the query
-    const querySnapshot = await getDocs(competitorQuery);
-    
-    // Transform the results
-    const competitors: Competitor[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as Competitor;
-      competitors.push({
-        id: doc.id,
-        ...data
-      });
-    });
-    
-    // If no competitors found, use real data collection
-    if (competitors.length === 0) {
-      console.log('No competitors found in database, collecting real data...');
-      // Use the real data collection service to find competitors
-      const realCompetitors = await performRealCompetitorAnalysis(userProfile);
-      return realCompetitors.competitors;
-    }
-    
-    return competitors;
+    // For now, return mock data
+    return getMockCompetitors(industry);
   } catch (error) {
     console.error('Error finding similar businesses:', error);
-    // Return mock data in case of error
-    return getMockCompetitors(userProfile.industry || 'Marketing');
+    return [];
   }
 };
 
@@ -107,16 +82,16 @@ export const performCompetitorAnalysis = async (userProfile: UserProfile): Promi
     // Use mock data
     return {
       competitors: getMockCompetitors(userProfile.industry || 'Marketing'),
-      opportunities: getMockOpportunities(userProfile.industry || 'Marketing'),
-      trends: getMockTrends(userProfile.industry || 'Marketing')
+      opportunities: getMockOpportunities(userProfile),
+      trends: getMockTrends(userProfile)
     };
   } catch (error) {
     console.error('Error performing competitor analysis:', error);
     // Return mock data in case of error
     return {
       competitors: getMockCompetitors(userProfile.industry || 'Marketing'),
-      opportunities: getMockOpportunities(userProfile.industry || 'Marketing'),
-      trends: getMockTrends(userProfile.industry || 'Marketing')
+      opportunities: getMockOpportunities(userProfile),
+      trends: getMockTrends(userProfile)
     };
   }
 };
@@ -124,58 +99,38 @@ export const performCompetitorAnalysis = async (userProfile: UserProfile): Promi
 // Function to get market opportunities
 const getMarketOpportunities = async (industry: string): Promise<MarketOpportunity[]> => {
   try {
-    const opportunitiesRef = collection(db, 'marketOpportunities');
-    const opportunityQuery = query(opportunitiesRef, where('industry', '==', industry));
+    // Create a mock user profile with just the industry
+    const mockUserProfile: UserProfile = {
+      uid: '',
+      email: '',
+      industry: industry,
+      hasCompletedOnboarding: true
+    };
     
-    const querySnapshot = await getDocs(opportunityQuery);
-    
-    const opportunities: MarketOpportunity[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as MarketOpportunity;
-      opportunities.push({
-        id: doc.id,
-        ...data
-      });
-    });
-    
-    // If no opportunities found, return mock data
-    if (opportunities.length === 0) {
-      return getMockOpportunities(industry);
-    }
-    
-    return opportunities;
+    // Return mock data for now
+    return getMockOpportunities(mockUserProfile);
   } catch (error) {
     console.error('Error getting market opportunities:', error);
-    return getMockOpportunities(industry);
+    return [];
   }
 };
 
 // Function to get market trends
 const getMarketTrends = async (industry: string): Promise<MarketTrend[]> => {
   try {
-    const trendsRef = collection(db, 'marketTrends');
-    const trendQuery = query(trendsRef, where('industry', '==', industry));
+    // Create a mock user profile with just the industry
+    const mockUserProfile: UserProfile = {
+      uid: '',
+      email: '',
+      industry: industry,
+      hasCompletedOnboarding: true
+    };
     
-    const querySnapshot = await getDocs(trendQuery);
-    
-    const trends: MarketTrend[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as MarketTrend;
-      trends.push({
-        id: doc.id,
-        ...data
-      });
-    });
-    
-    // If no trends found, return mock data
-    if (trends.length === 0) {
-      return getMockTrends(industry);
-    }
-    
-    return trends;
+    // Return mock data for now
+    return getMockTrends(mockUserProfile);
   } catch (error) {
     console.error('Error getting market trends:', error);
-    return getMockTrends(industry);
+    return [];
   }
 };
 
@@ -256,8 +211,14 @@ const getMockCompetitors = (industry: string): Competitor[] => {
   return competitors;
 };
 
-const getMockOpportunities = (industry: string): MarketOpportunity[] => {
-  return [
+const getMockOpportunities = (userProfile: UserProfile): MarketOpportunity[] => {
+  const industry = userProfile.industry || 'Marketing';
+  const businessType = userProfile.businessType || '';
+  const specializations = userProfile.specializations || [];
+  const targetAudience = userProfile.targetAudience || '';
+  
+  // Base opportunities that apply to most businesses
+  const baseOpportunities: MarketOpportunity[] = [
     {
       id: '1',
       opportunity: `SMB-focused simplified ${industry} solutions`,
@@ -267,9 +228,97 @@ const getMockOpportunities = (industry: string): MarketOpportunity[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '2',
+    }
+  ];
+  
+  // Business type specific opportunities
+  const businessTypeOpportunities: Record<string, MarketOpportunity[]> = {
+    'SaaS': [
+      {
+        id: 'saas-1',
+        opportunity: 'Vertical-specific SaaS solutions',
+        potential: 'Very High',
+        description: `Developing specialized SaaS solutions for specific industries rather than one-size-fits-all approaches.`,
+        competition: 'Medium',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'saas-2',
+        opportunity: 'No-code/low-code functionality',
+        potential: 'High',
+        description: 'Incorporating no-code/low-code capabilities to allow customers to customize solutions without developer resources.',
+        competition: 'Medium',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ],
+    'Personal Trainer': [
+      {
+        id: 'pt-1',
+        opportunity: 'Online training programs',
+        potential: 'High',
+        description: 'Developing comprehensive online training programs that clients can follow remotely.',
+        competition: 'Medium',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'pt-2',
+        opportunity: 'Specialized fitness niches',
+        potential: 'Very High',
+        description: 'Focusing on underserved fitness niches like senior fitness, prenatal/postnatal, or specific medical conditions.',
+        competition: 'Low',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ]
+  };
+  
+  // Specialization-based opportunities
+  const specializationOpportunities: MarketOpportunity[] = [];
+  
+  if (specializations.some(s => s.toLowerCase().includes('booking') || s.toLowerCase().includes('appointment'))) {
+    specializationOpportunities.push({
+      id: 'spec-booking',
+      opportunity: 'Mobile-first booking experience',
+      potential: 'High',
+      description: 'Optimizing the booking experience specifically for mobile users with streamlined interfaces.',
+      competition: 'Medium',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  if (specializations.some(s => s.toLowerCase().includes('ai') || s.toLowerCase().includes('machine learning'))) {
+    specializationOpportunities.push({
+      id: 'spec-ai',
+      opportunity: 'AI-powered personalization',
+      potential: 'Very High',
+      description: 'Using AI to deliver highly personalized experiences based on user behavior and preferences.',
+      competition: 'Medium',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  // Combine all opportunities
+  const allOpportunities = [
+    ...baseOpportunities,
+    ...(businessTypeOpportunities[businessType] || []),
+    ...specializationOpportunities
+  ];
+  
+  // If we still have fewer than 3 opportunities, add some generic ones
+  if (allOpportunities.length < 3) {
+    allOpportunities.push({
+      id: 'generic-1',
       opportunity: `AI-driven ${industry} strategy generation`,
       potential: 'Very High',
       description: `Automated ${industry} strategy creation based on analytics data is an emerging space with few established players.`,
@@ -277,9 +326,10 @@ const getMockOpportunities = (industry: string): MarketOpportunity[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '3',
+    });
+    
+    allOpportunities.push({
+      id: 'generic-2',
       opportunity: `Privacy-compliant ${industry} alternative`,
       potential: 'Medium',
       description: `As privacy regulations tighten, there's growing demand for ${industry} solutions that work without cookies/tracking.`,
@@ -287,12 +337,20 @@ const getMockOpportunities = (industry: string): MarketOpportunity[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    }
-  ];
+    });
+  }
+  
+  // Return up to 5 opportunities
+  return allOpportunities.slice(0, 5);
 };
 
-const getMockTrends = (industry: string): MarketTrend[] => {
-  return [
+const getMockTrends = (userProfile: UserProfile): MarketTrend[] => {
+  const industry = userProfile.industry || 'Marketing';
+  const businessType = userProfile.businessType || '';
+  const specializations = userProfile.specializations || [];
+  
+  // Base trends that apply to most businesses
+  const baseTrends: MarketTrend[] = [
     {
       id: '1',
       name: `AI Integration in ${industry}`,
@@ -312,9 +370,97 @@ const getMockTrends = (industry: string): MarketTrend[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '3',
+    }
+  ];
+  
+  // Business type specific trends
+  const businessTypeTrends: Record<string, MarketTrend[]> = {
+    'SaaS': [
+      {
+        id: 'saas-trend-1',
+        name: 'Vertical SaaS Growth',
+        description: 'Industry-specific SaaS solutions are growing faster than horizontal platforms as businesses seek more tailored functionality.',
+        impact: 'High',
+        timeframe: 'Short-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'saas-trend-2',
+        name: 'Product-Led Growth',
+        description: 'SaaS companies are increasingly adopting product-led growth strategies, letting the product itself drive customer acquisition and expansion.',
+        impact: 'Medium',
+        timeframe: 'Medium-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ],
+    'Personal Trainer': [
+      {
+        id: 'pt-trend-1',
+        name: 'Hybrid Training Models',
+        description: 'Combining in-person and virtual training sessions to offer clients more flexibility while maintaining personal connections.',
+        impact: 'High',
+        timeframe: 'Short-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'pt-trend-2',
+        name: 'Wearable Integration',
+        description: 'Integration with wearable fitness devices to track client progress and provide more data-driven coaching.',
+        impact: 'Medium',
+        timeframe: 'Medium-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ]
+  };
+  
+  // Specialization-based trends
+  const specializationTrends: MarketTrend[] = [];
+  
+  if (specializations.some(s => s.toLowerCase().includes('booking') || s.toLowerCase().includes('appointment'))) {
+    specializationTrends.push({
+      id: 'spec-trend-booking',
+      name: 'Contactless Booking & Check-in',
+      description: 'Streamlined, contactless booking and check-in processes are becoming expected by customers across industries.',
+      impact: 'Medium',
+      timeframe: 'Short-term',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  if (specializations.some(s => s.toLowerCase().includes('ai') || s.toLowerCase().includes('machine learning'))) {
+    specializationTrends.push({
+      id: 'spec-trend-ai',
+      name: 'Explainable AI',
+      description: 'As AI becomes more prevalent, the ability to explain AI decisions in human terms is becoming a key differentiator.',
+      impact: 'High',
+      timeframe: 'Medium-term',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  // Combine all trends
+  const allTrends = [
+    ...baseTrends,
+    ...(businessTypeTrends[businessType] || []),
+    ...specializationTrends
+  ];
+  
+  // If we still have fewer than 4 trends, add some generic ones
+  if (allTrends.length < 4) {
+    allTrends.push({
+      id: 'generic-trend-1',
       name: 'Omnichannel Integration',
       description: `Seamless integration across all ${industry} channels is becoming essential, with customers expecting consistent experiences.`,
       impact: 'Medium',
@@ -322,9 +468,10 @@ const getMockTrends = (industry: string): MarketTrend[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '4',
+    });
+    
+    allTrends.push({
+      id: 'generic-trend-2',
       name: 'Sustainability Focus',
       description: `${industry} strategies are increasingly incorporating sustainability messaging and practices to appeal to environmentally conscious consumers.`,
       impact: 'Medium',
@@ -332,8 +479,11 @@ const getMockTrends = (industry: string): MarketTrend[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    }
-  ];
+    });
+  }
+  
+  // Return up to 6 trends
+  return allTrends.slice(0, 6);
 };
 
 // Function to save competitor analysis to user's saved reports

@@ -408,28 +408,8 @@ export default function MarketResearchPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64 relative flex items-center">
-                      {/* Replace the placeholder with the actual pie chart */}
-                      <div className="w-full">
-                        <MarketSharePieChart competitors={sortedCompetitors} />
-                      </div>
-                      
-                      {/* Legend */}
-                      <div className="absolute right-0 top-0 space-y-2">
-                        {sortedCompetitors.map((competitor) => (
-                          <div key={competitor.id} className="flex items-center gap-2">
-                            <div className={`w-3 h-3 rounded-full ${competitor.color}`}></div>
-                            <span className="text-sm">{competitor.name} ({competitor.marketShare}%)</span>
-                          </div>
-                        ))}
-                        {/* Add "Others" to the legend if total market share < 100% */}
-                        {sortedCompetitors.reduce((sum, comp) => sum + comp.marketShare, 0) < 100 && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                            <span className="text-sm">Others ({100 - sortedCompetitors.reduce((sum, comp) => sum + comp.marketShare, 0)}%)</span>
-                          </div>
-                        )}
-                      </div>
+                    <div className="h-auto">
+                      <MarketSharePieChart competitors={sortedCompetitors} />
                     </div>
                   </CardContent>
                 </Card>
