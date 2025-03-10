@@ -21,10 +21,20 @@ interface OnboardingData {
   businessName?: string;
   industry?: string;
   businessSize?: string;
+  businessType?: string; // Specific type of business within the industry
   location?: string;
   website?: string;
   phone?: string;
   about?: string; // Business description/about section
+  
+  // Detailed business information
+  targetAudience?: string; // Who the business serves
+  specializations?: string[]; // Specific areas of expertise
+  businessModel?: string; // How the business operates
+  yearsInBusiness?: string; // How long the business has been operating
+  priceRange?: string; // Price range of products/services
+  serviceArea?: string; // Geographic service area
+  keyDifferentiators?: string[]; // What makes the business unique
   
   // Marketing Goals
   goals?: string[];
@@ -204,7 +214,15 @@ export function OnboardingProvider({ children, initialStep = "welcome" }: Onboar
         email: user.email || onboardingData.email || 'unknown@example.com',
         displayName: onboardingData.displayName || user.displayName || undefined,
         // Map the 'about' field to the 'bio' field in UserProfile
-        bio: onboardingData.about
+        bio: onboardingData.about,
+        // Map detailed business information
+        targetAudience: onboardingData.targetAudience,
+        specializations: onboardingData.specializations,
+        businessModel: onboardingData.businessModel,
+        yearsInBusiness: onboardingData.yearsInBusiness,
+        priceRange: onboardingData.priceRange,
+        serviceArea: onboardingData.serviceArea,
+        keyDifferentiators: onboardingData.keyDifferentiators
       };
       
       // Log the data we're about to save

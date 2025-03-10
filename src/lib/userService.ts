@@ -18,10 +18,21 @@ export interface UserProfile {
   businessName?: string;
   industry?: string;
   businessSize?: string;
+  businessType?: string; // Specific type of business within the industry
   location?: string;
   website?: string;
   phone?: string;
   bio?: string;
+  
+  // Detailed business information
+  targetAudience?: string; // Who the business serves (e.g., "corporate clients", "athletes", "small businesses")
+  specializations?: string[]; // Specific areas of expertise (e.g., ["weight loss", "strength training"] for a PT)
+  businessModel?: string; // How the business operates (e.g., "subscription", "one-time service", "membership")
+  yearsInBusiness?: string; // How long the business has been operating
+  priceRange?: string; // Price range of products/services (e.g., "budget", "mid-range", "premium")
+  serviceArea?: string; // Geographic service area (e.g., "local", "national", "international")
+  keyDifferentiators?: string[]; // What makes the business unique
+  
   goals?: string[];
   marketingChannels?: string[];
   avatarUrl?: string;

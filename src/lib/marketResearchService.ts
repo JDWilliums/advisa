@@ -48,38 +48,13 @@ export interface MarketTrend {
 export const findSimilarBusinesses = async (userProfile: UserProfile): Promise<Competitor[]> => {
   try {
     // Extract relevant information from user profile
-    const { industry, businessSize, location } = userProfile;
+    const industry = userProfile.industry || 'General';
     
-    // Create a query to find similar businesses in the same industry
-    const competitorsRef = collection(db, 'competitors');
-    const competitorQuery = query(competitorsRef, where('industry', '==', industry || 'Marketing'));
-    
-    // Execute the query
-    const querySnapshot = await getDocs(competitorQuery);
-    
-    // Transform the results
-    const competitors: Competitor[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as Competitor;
-      competitors.push({
-        id: doc.id,
-        ...data
-      });
-    });
-    
-    // If no competitors found, use real data collection
-    if (competitors.length === 0) {
-      console.log('No competitors found in database, collecting real data...');
-      // Use the real data collection service to find competitors
-      const realCompetitors = await performRealCompetitorAnalysis(userProfile);
-      return realCompetitors.competitors;
-    }
-    
-    return competitors;
+    // For now, return mock data
+    return getMockCompetitors(industry);
   } catch (error) {
     console.error('Error finding similar businesses:', error);
-    // Return mock data in case of error
-    return getMockCompetitors(userProfile.industry || 'Marketing');
+    return [];
   }
 };
 
@@ -107,16 +82,16 @@ export const performCompetitorAnalysis = async (userProfile: UserProfile): Promi
     // Use mock data
     return {
       competitors: getMockCompetitors(userProfile.industry || 'Marketing'),
-      opportunities: getMockOpportunities(userProfile.industry || 'Marketing'),
-      trends: getMockTrends(userProfile.industry || 'Marketing')
+      opportunities: getMockOpportunities(userProfile),
+      trends: getMockTrends(userProfile)
     };
   } catch (error) {
     console.error('Error performing competitor analysis:', error);
     // Return mock data in case of error
     return {
       competitors: getMockCompetitors(userProfile.industry || 'Marketing'),
-      opportunities: getMockOpportunities(userProfile.industry || 'Marketing'),
-      trends: getMockTrends(userProfile.industry || 'Marketing')
+      opportunities: getMockOpportunities(userProfile),
+      trends: getMockTrends(userProfile)
     };
   }
 };
@@ -124,71 +99,135 @@ export const performCompetitorAnalysis = async (userProfile: UserProfile): Promi
 // Function to get market opportunities
 const getMarketOpportunities = async (industry: string): Promise<MarketOpportunity[]> => {
   try {
-    const opportunitiesRef = collection(db, 'marketOpportunities');
-    const opportunityQuery = query(opportunitiesRef, where('industry', '==', industry));
+    // Create a mock user profile with just the industry
+    const mockUserProfile: UserProfile = {
+      uid: '',
+      email: '',
+      industry: industry,
+      hasCompletedOnboarding: true
+    };
     
-    const querySnapshot = await getDocs(opportunityQuery);
-    
-    const opportunities: MarketOpportunity[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as MarketOpportunity;
-      opportunities.push({
-        id: doc.id,
-        ...data
-      });
-    });
-    
-    // If no opportunities found, return mock data
-    if (opportunities.length === 0) {
-      return getMockOpportunities(industry);
-    }
-    
-    return opportunities;
+    // Return mock data for now
+    return getMockOpportunities(mockUserProfile);
   } catch (error) {
     console.error('Error getting market opportunities:', error);
-    return getMockOpportunities(industry);
+    return [];
   }
 };
 
 // Function to get market trends
 const getMarketTrends = async (industry: string): Promise<MarketTrend[]> => {
   try {
-    const trendsRef = collection(db, 'marketTrends');
-    const trendQuery = query(trendsRef, where('industry', '==', industry));
+    // Create a mock user profile with just the industry
+    const mockUserProfile: UserProfile = {
+      uid: '',
+      email: '',
+      industry: industry,
+      hasCompletedOnboarding: true
+    };
     
-    const querySnapshot = await getDocs(trendQuery);
-    
-    const trends: MarketTrend[] = [];
-    querySnapshot.forEach((doc) => {
-      const data = doc.data() as MarketTrend;
-      trends.push({
-        id: doc.id,
-        ...data
-      });
-    });
-    
-    // If no trends found, return mock data
-    if (trends.length === 0) {
-      return getMockTrends(industry);
-    }
-    
-    return trends;
+    // Return mock data for now
+    return getMockTrends(mockUserProfile);
   } catch (error) {
     console.error('Error getting market trends:', error);
-    return getMockTrends(industry);
+    return [];
   }
 };
 
 // Mock data functions (will be used until real data is available in Firestore)
+/**
+ * Generate mock competitors with realistic data
+ * @param industry The industry to generate competitors for
+ * @returns Array of competitor objects with realistic market share and growth data
+ */
 const getMockCompetitors = (industry: string): Competitor[] => {
+  // Industry growth rates based on real-world data
+  // These represent the average annual growth rate for different industries
+  const industryGrowthRates: Record<string, number> = {
+    'Technology': 10.2,
+    'Health & Wellness': 7.5,
+    'Marketing': 6.8,
+    'Retail': 4.2,
+    'Food & Beverage': 3.5,
+    'Professional Services': 5.3,
+    'Home Services': 4.7,
+    'Education': 6.1,
+    'Real Estate': 3.9,
+    'Manufacturing': 2.8,
+    'Arts & Entertainment': 5.6
+  };
+  
+  // Industry concentration data (how concentrated market share is among top players)
+  // Higher number means more concentrated (fewer players dominate the market)
+  const industryConcentration: Record<string, number> = {
+    'Technology': 0.7, // Tech tends to have a few dominant players
+    'Health & Wellness': 0.4, // More fragmented market
+    'Marketing': 0.5,
+    'Retail': 0.6,
+    'Food & Beverage': 0.4,
+    'Professional Services': 0.3, // Very fragmented
+    'Home Services': 0.2, // Extremely fragmented
+    'Education': 0.5,
+    'Real Estate': 0.3,
+    'Manufacturing': 0.6,
+    'Arts & Entertainment': 0.5
+  };
+  
+  // Get the base growth rate for the industry (or default to 5%)
+  const baseGrowthRate = industryGrowthRates[industry] || 5.0;
+  
+  // Get the concentration factor for the industry (or default to 0.5)
+  const concentrationFactor = industryConcentration[industry] || 0.5;
+  
+  // Generate a realistic growth rate with some variation
+  const generateGrowthRate = (marketPosition: 'leader' | 'growing' | 'declining' | 'new'): number => {
+    switch (marketPosition) {
+      case 'leader':
+        // Market leaders typically grow at or slightly above industry average
+        return baseGrowthRate + (Math.random() * 3);
+      case 'growing':
+        // Growing companies typically grow faster than industry average
+        return baseGrowthRate + (Math.random() * 7) + 3;
+      case 'declining':
+        // Declining companies typically have negative growth
+        return -1 * (Math.random() * 5) - 1;
+      case 'new':
+        // New entrants typically grow faster but from a smaller base
+        return baseGrowthRate + (Math.random() * 10) + 5;
+      default:
+        return baseGrowthRate;
+    }
+  };
+  
+  // Round to 1 decimal place
+  const roundGrowth = (growth: number): number => {
+    return Math.round(growth * 10) / 10;
+  };
+  
+  // Generate realistic market shares based on industry concentration
+  // The sum should be less than 100% to account for the long tail of smaller competitors
+  const generateMarketShares = (concentration: number): number[] => {
+    // Higher concentration means the top player has more market share
+    const leader = Math.round(20 + (concentration * 20)); // Between 20-40% based on concentration
+    const second = Math.round(leader * (0.6 + (Math.random() * 0.2))); // 60-80% of leader
+    const third = Math.round(second * (0.6 + (Math.random() * 0.2))); // 60-80% of second
+    const fourth = Math.round(third * (0.6 + (Math.random() * 0.2))); // 60-80% of third
+    const fifth = Math.round(fourth * (0.6 + (Math.random() * 0.2))); // 60-80% of fourth
+    
+    return [leader, second, third, fourth, fifth];
+  };
+  
+  // Generate market shares
+  const marketShares = generateMarketShares(concentrationFactor);
+  
   // Generate industry-specific mock competitors
   const competitors: Competitor[] = [
     {
       id: '1',
       name: "MarketMaster",
       website: "marketmaster.com",
-      marketShare: 28,
-      growth: 12.5,
+      marketShare: marketShares[0],
+      growth: roundGrowth(generateGrowthRate('leader')),
       strengths: ["Great UI/UX", "Advanced analytics", "Strong API"],
       weaknesses: ["Expensive", "Complex setup", "Limited integrations"],
       overview: `Market leader in ${industry} with comprehensive analytics. Their platform offers advanced features but at a premium price point.`,
@@ -204,8 +243,8 @@ const getMockCompetitors = (industry: string): Competitor[] => {
       id: '2',
       name: "PromoPro",
       website: "promopro.io",
-      marketShare: 22,
-      growth: 15.8,
+      marketShare: marketShares[1],
+      growth: roundGrowth(generateGrowthRate('growing')),
       strengths: ["Affordable", "User-friendly", "Good for beginners"],
       weaknesses: ["Limited features", "Basic analytics", "Poor support"],
       overview: `Growing rapidly in the ${industry} space with focus on SMBs. Offers a simplified solution with competitive pricing.`,
@@ -221,8 +260,8 @@ const getMockCompetitors = (industry: string): Competitor[] => {
       id: '3',
       name: "AdInsights",
       website: "adinsights.com",
-      marketShare: 18,
-      growth: -2.5,
+      marketShare: marketShares[2],
+      growth: roundGrowth(generateGrowthRate('declining')),
       strengths: [`${industry}-focused analytics`, "Strong reporting", "Industry expertise"],
       weaknesses: ["Outdated UI", "Slow updates", "Limited scope"],
       overview: `Specializes in ${industry} analytics with deep insights. Losing market share due to outdated technology.`,
@@ -238,8 +277,8 @@ const getMockCompetitors = (industry: string): Competitor[] => {
       id: '4',
       name: "DataMarket",
       website: "datamarket.co",
-      marketShare: 15,
-      growth: 8.2,
+      marketShare: marketShares[3],
+      growth: roundGrowth(generateGrowthRate('new')),
       strengths: ["Data visualization", "Integration ecosystem", "Modern tech stack"],
       weaknesses: ["Newer player", "Less established", "Some reliability issues"],
       overview: `Modern ${industry} platform focusing on data visualization and integrations with other tools.`,
@@ -253,11 +292,56 @@ const getMockCompetitors = (industry: string): Competitor[] => {
     }
   ];
   
+  // Add industry-specific competitors
+  if (industry === 'Technology') {
+    competitors.push({
+      id: '5',
+      name: "TechSolutions",
+      website: "techsolutions.dev",
+      marketShare: marketShares[4],
+      growth: roundGrowth(generateGrowthRate('growing')),
+      strengths: ["Cutting-edge technology", "Strong developer community", "Open-source components"],
+      weaknesses: ["Higher technical barrier", "Less business-focused", "Requires technical expertise"],
+      overview: "A developer-focused platform with cutting-edge technology and strong community support.",
+      logo: "TS",
+      color: "bg-indigo-600",
+      industry: industry,
+      businessSize: "Mid-market",
+      location: "Global",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  } else if (industry === 'Health & Wellness') {
+    competitors.push({
+      id: '5',
+      name: "WellnessHub",
+      website: "wellnesshub.fit",
+      marketShare: marketShares[4],
+      growth: roundGrowth(generateGrowthRate('growing')),
+      strengths: ["Holistic approach", "Community features", "Personalized programs"],
+      weaknesses: ["Premium pricing", "Limited free tier", "Regional focus"],
+      overview: "A comprehensive wellness platform focusing on holistic health and community engagement.",
+      logo: "WH",
+      color: "bg-teal-600",
+      industry: industry,
+      businessSize: "Mid-market",
+      location: "North America",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
   return competitors;
 };
 
-const getMockOpportunities = (industry: string): MarketOpportunity[] => {
-  return [
+const getMockOpportunities = (userProfile: UserProfile): MarketOpportunity[] => {
+  const industry = userProfile.industry || 'Marketing';
+  const businessType = userProfile.businessType || '';
+  const specializations = userProfile.specializations || [];
+  const targetAudience = userProfile.targetAudience || '';
+  
+  // Base opportunities that apply to most businesses
+  const baseOpportunities: MarketOpportunity[] = [
     {
       id: '1',
       opportunity: `SMB-focused simplified ${industry} solutions`,
@@ -267,9 +351,97 @@ const getMockOpportunities = (industry: string): MarketOpportunity[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '2',
+    }
+  ];
+  
+  // Business type specific opportunities
+  const businessTypeOpportunities: Record<string, MarketOpportunity[]> = {
+    'SaaS': [
+      {
+        id: 'saas-1',
+        opportunity: 'Vertical-specific SaaS solutions',
+        potential: 'Very High',
+        description: `Developing specialized SaaS solutions for specific industries rather than one-size-fits-all approaches.`,
+        competition: 'Medium',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'saas-2',
+        opportunity: 'No-code/low-code functionality',
+        potential: 'High',
+        description: 'Incorporating no-code/low-code capabilities to allow customers to customize solutions without developer resources.',
+        competition: 'Medium',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ],
+    'Personal Trainer': [
+      {
+        id: 'pt-1',
+        opportunity: 'Online training programs',
+        potential: 'High',
+        description: 'Developing comprehensive online training programs that clients can follow remotely.',
+        competition: 'Medium',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'pt-2',
+        opportunity: 'Specialized fitness niches',
+        potential: 'Very High',
+        description: 'Focusing on underserved fitness niches like senior fitness, prenatal/postnatal, or specific medical conditions.',
+        competition: 'Low',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ]
+  };
+  
+  // Specialization-based opportunities
+  const specializationOpportunities: MarketOpportunity[] = [];
+  
+  if (specializations.some(s => s.toLowerCase().includes('booking') || s.toLowerCase().includes('appointment'))) {
+    specializationOpportunities.push({
+      id: 'spec-booking',
+      opportunity: 'Mobile-first booking experience',
+      potential: 'High',
+      description: 'Optimizing the booking experience specifically for mobile users with streamlined interfaces.',
+      competition: 'Medium',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  if (specializations.some(s => s.toLowerCase().includes('ai') || s.toLowerCase().includes('machine learning'))) {
+    specializationOpportunities.push({
+      id: 'spec-ai',
+      opportunity: 'AI-powered personalization',
+      potential: 'Very High',
+      description: 'Using AI to deliver highly personalized experiences based on user behavior and preferences.',
+      competition: 'Medium',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  // Combine all opportunities
+  const allOpportunities = [
+    ...baseOpportunities,
+    ...(businessTypeOpportunities[businessType] || []),
+    ...specializationOpportunities
+  ];
+  
+  // If we still have fewer than 3 opportunities, add some generic ones
+  if (allOpportunities.length < 3) {
+    allOpportunities.push({
+      id: 'generic-1',
       opportunity: `AI-driven ${industry} strategy generation`,
       potential: 'Very High',
       description: `Automated ${industry} strategy creation based on analytics data is an emerging space with few established players.`,
@@ -277,9 +449,10 @@ const getMockOpportunities = (industry: string): MarketOpportunity[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '3',
+    });
+    
+    allOpportunities.push({
+      id: 'generic-2',
       opportunity: `Privacy-compliant ${industry} alternative`,
       potential: 'Medium',
       description: `As privacy regulations tighten, there's growing demand for ${industry} solutions that work without cookies/tracking.`,
@@ -287,12 +460,20 @@ const getMockOpportunities = (industry: string): MarketOpportunity[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    }
-  ];
+    });
+  }
+  
+  // Return up to 5 opportunities
+  return allOpportunities.slice(0, 5);
 };
 
-const getMockTrends = (industry: string): MarketTrend[] => {
-  return [
+const getMockTrends = (userProfile: UserProfile): MarketTrend[] => {
+  const industry = userProfile.industry || 'Marketing';
+  const businessType = userProfile.businessType || '';
+  const specializations = userProfile.specializations || [];
+  
+  // Base trends that apply to most businesses
+  const baseTrends: MarketTrend[] = [
     {
       id: '1',
       name: `AI Integration in ${industry}`,
@@ -312,9 +493,97 @@ const getMockTrends = (industry: string): MarketTrend[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '3',
+    }
+  ];
+  
+  // Business type specific trends
+  const businessTypeTrends: Record<string, MarketTrend[]> = {
+    'SaaS': [
+      {
+        id: 'saas-trend-1',
+        name: 'Vertical SaaS Growth',
+        description: 'Industry-specific SaaS solutions are growing faster than horizontal platforms as businesses seek more tailored functionality.',
+        impact: 'High',
+        timeframe: 'Short-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'saas-trend-2',
+        name: 'Product-Led Growth',
+        description: 'SaaS companies are increasingly adopting product-led growth strategies, letting the product itself drive customer acquisition and expansion.',
+        impact: 'Medium',
+        timeframe: 'Medium-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ],
+    'Personal Trainer': [
+      {
+        id: 'pt-trend-1',
+        name: 'Hybrid Training Models',
+        description: 'Combining in-person and virtual training sessions to offer clients more flexibility while maintaining personal connections.',
+        impact: 'High',
+        timeframe: 'Short-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      },
+      {
+        id: 'pt-trend-2',
+        name: 'Wearable Integration',
+        description: 'Integration with wearable fitness devices to track client progress and provide more data-driven coaching.',
+        impact: 'Medium',
+        timeframe: 'Medium-term',
+        industry: industry,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }
+    ]
+  };
+  
+  // Specialization-based trends
+  const specializationTrends: MarketTrend[] = [];
+  
+  if (specializations.some(s => s.toLowerCase().includes('booking') || s.toLowerCase().includes('appointment'))) {
+    specializationTrends.push({
+      id: 'spec-trend-booking',
+      name: 'Contactless Booking & Check-in',
+      description: 'Streamlined, contactless booking and check-in processes are becoming expected by customers across industries.',
+      impact: 'Medium',
+      timeframe: 'Short-term',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  if (specializations.some(s => s.toLowerCase().includes('ai') || s.toLowerCase().includes('machine learning'))) {
+    specializationTrends.push({
+      id: 'spec-trend-ai',
+      name: 'Explainable AI',
+      description: 'As AI becomes more prevalent, the ability to explain AI decisions in human terms is becoming a key differentiator.',
+      impact: 'High',
+      timeframe: 'Medium-term',
+      industry: industry,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+  }
+  
+  // Combine all trends
+  const allTrends = [
+    ...baseTrends,
+    ...(businessTypeTrends[businessType] || []),
+    ...specializationTrends
+  ];
+  
+  // If we still have fewer than 4 trends, add some generic ones
+  if (allTrends.length < 4) {
+    allTrends.push({
+      id: 'generic-trend-1',
       name: 'Omnichannel Integration',
       description: `Seamless integration across all ${industry} channels is becoming essential, with customers expecting consistent experiences.`,
       impact: 'Medium',
@@ -322,9 +591,10 @@ const getMockTrends = (industry: string): MarketTrend[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    },
-    {
-      id: '4',
+    });
+    
+    allTrends.push({
+      id: 'generic-trend-2',
       name: 'Sustainability Focus',
       description: `${industry} strategies are increasingly incorporating sustainability messaging and practices to appeal to environmentally conscious consumers.`,
       impact: 'Medium',
@@ -332,8 +602,11 @@ const getMockTrends = (industry: string): MarketTrend[] => {
       industry: industry,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
-    }
-  ];
+    });
+  }
+  
+  // Return up to 6 trends
+  return allTrends.slice(0, 6);
 };
 
 // Function to save competitor analysis to user's saved reports
