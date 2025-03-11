@@ -153,6 +153,14 @@ export async function analyzeSEO(url: string, depth: AnalysisDepth = 'standard')
     return getMockSEOResult(url, depth);
   }
 
+  // Log environment status for debugging
+  console.log('SEO ANALYSIS - Environment:', {
+    NODE_ENV: process.env.NODE_ENV,
+    USE_MOCK_SEO: process.env.USE_MOCK_SEO,
+    FALLBACK_TO_MOCK: process.env.FALLBACK_TO_MOCK,
+    BROWSERLESS_TOKEN_EXISTS: !!process.env.BROWSERLESS_TOKEN
+  });
+
   let browser: puppeteer.Browser | null = null;
   let page: puppeteer.Page | null = null;
   

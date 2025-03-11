@@ -3,14 +3,39 @@ import { NextRequest, NextResponse } from 'next/server';
 import { analyzeSEO } from '@/app/dashboard/seo-content/api/analyze-seo';
 import { AnalysisDepth } from '@/app/dashboard/seo-content/types/seo';
 
+// Save original environment variable for restoration
+if (!process.env.ORIGINAL_FALLBACK_TO_MOCK) {
+  process.env.ORIGINAL_FALLBACK_TO_MOCK = process.env.FALLBACK_TO_MOCK;
+}
+
 export const maxDuration = 60; // Set maximum execution time to 60 seconds
 export const dynamic = 'force-dynamic'; // Ensure this route is never cached
 
 export async function POST(request: NextRequest) {
   try {
+    // Log environment for debugging
+    console.log('API: SEO Analysis Environment', {
+      NODE_ENV: process.env.NODE_ENV,
+      FALLBACK_TO_MOCK: process.env.FALLBACK_TO_MOCK,
+      BROWSERLESS_TOKEN_EXISTS: !!process.env.BROWSERLESS_TOKEN
+    });
+    
     // Parse request body
     const body = await request.json();
-    const { url, depth = 'standard' } = body;
+    const { url, depth = 'standard', forceMock = false } = body;
+    
+    // Check for force real data options in query params or headers
+    const searchParams = request.nextUrl.searchParams;
+    const noFallback = searchParams.get('noFallback') === 'true' || 
+                      request.headers.get('x-force-real-data') === 'true';
+    
+    console.log('API: Request options:', {
+      url,
+      depth,
+      forceMock,
+      noFallback,
+      forceRealData: request.headers.get('x-force-real-data')
+    });
     
     // Validate input
     if (!url) {
@@ -29,10 +54,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For debugging - allow forcing mock data through query parameter
+    if (forceMock) {
+      console.log('API: Forcing mock data due to forceMock parameter');
+      const { getMockSEOResult } = await import('@/app/dashboard/seo-content/api/analyze-seo');
+      const mockResult = getMockSEOResult(url, depth as AnalysisDepth);
+      mockResult.warning = 'Using forced mock data for debugging';
+      return NextResponse.json(mockResult);
+    }
+
     try {
       // Run SEO analysis with our improved browserless-compatible analyzer
       console.log(`API: Starting SEO analysis for ${url} with depth ${depth}`);
+      
+      // If noFallback is set, temporarily override FALLBACK_TO_MOCK
+      if (noFallback) {
+        console.log('API: Forcing real data (no fallback)');
+        process.env.FALLBACK_TO_MOCK = 'false';
+      }
+      
       const result = await analyzeSEO(url, depth as AnalysisDepth);
+      
+      // Restore original FALLBACK_TO_MOCK setting if we changed it
+      if (noFallback) {
+        process.env.FALLBACK_TO_MOCK = process.env.ORIGINAL_FALLBACK_TO_MOCK || 'true';
+      }
       
       // Check if we received mock data with a warning
       if (result.warning) {

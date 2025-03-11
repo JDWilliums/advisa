@@ -18,15 +18,22 @@ export async function launchBrowser(): Promise<Browser> {
   // Detect environment
   const isDev = process.env.NODE_ENV !== 'production';
   
+  console.log(`BROWSER LAUNCHER - Environment: ${isDev ? 'Development' : 'Production'}`);
+  console.log(`BROWSER LAUNCHER - Browserless token exists: ${!!process.env.BROWSERLESS_TOKEN}`);
+  
   // If in production and BROWSERLESS_TOKEN is available, use browserless.io
   if (!isDev && process.env.BROWSERLESS_TOKEN) {
-    console.log('🔍 Using Browserless.io service');
+    console.log('🔍 Using Browserless.io service with token starting with:', process.env.BROWSERLESS_TOKEN.substring(0, 5));
     try {
-      return await puppeteerCore.connect({
+      console.log('Attempting to connect to Browserless.io...');
+      const browser = await puppeteerCore.connect({
         browserWSEndpoint: `wss://chrome.browserless.io?token=${process.env.BROWSERLESS_TOKEN}`,
       }) as unknown as Browser;
+      console.log('Successfully connected to Browserless.io!');
+      return browser;
     } catch (error) {
       console.error('Failed to connect to Browserless.io:', error);
+      console.error('Connection error details:', JSON.stringify(error, null, 2));
       throw new Error(`Could not connect to Browserless.io: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
