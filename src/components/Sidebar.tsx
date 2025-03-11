@@ -61,7 +61,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       {/* Mobile menu button */}
       <button 
         onClick={toggleSidebar}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 rounded-md bg-white dark:bg-gray-800 shadow-md"
+        className="md:hidden fixed top-16 left-4 z-40 p-2 rounded-md bg-white dark:bg-gray-800 shadow-md"
         aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
       >
         {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
@@ -69,14 +69,12 @@ export default function Sidebar({ onLogout }: SidebarProps) {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed md:relative z-30 inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 transform ${
+        className={`fixed md:relative z-30 inset-y-0 left-0 top-[52px] md:top-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all duration-300 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-16"
-        } overflow-y-auto flex flex-col`}
+        } overflow-y-auto flex flex-col h-[calc(100vh-52px)] md:h-full`}
       >
-        {/* Sidebar content */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className={`text-xl font-bold ${isSidebarOpen ? "block" : "hidden md:hidden"}`}>Advisa</h2>
-        </div>
+        {/* Removed the Advisa heading to fix duplicate logo issue */}
+        <div className="p-2"></div>
         
         <nav className="flex-1 px-2 py-4 space-y-1">
           {navigation.map((item) => {
@@ -114,7 +112,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       {/* Backdrop for mobile sidebar */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 z-20 bg-black/50 md:hidden" 
+          className="fixed inset-0 z-20 bg-black/50 md:hidden top-[52px]" 
           onClick={toggleSidebar}
         ></div>
       )}

@@ -10,7 +10,7 @@ interface NavbarProps {
 
 export default function Navbar({ darkMode, toggleDarkMode, onLogout }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <header className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
       {/* Left section: Logo */}
       <div className="flex items-center">
         <Link href="/dashboard" className="flex items-center">

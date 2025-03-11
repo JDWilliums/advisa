@@ -58,10 +58,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className={`flex h-screen ${darkMode ? 'dark' : ''}`}>
-      <Sidebar onLogout={logout} />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} onLogout={logout} />
+    <div className={`flex flex-col h-screen ${darkMode ? 'dark' : ''}`}>
+      {/* Navbar at the top */}
+      <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} onLogout={logout} />
+      
+      {/* Main content area with sidebar */}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar onLogout={logout} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-6">
           {children}
         </main>
